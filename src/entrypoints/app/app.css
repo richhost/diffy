@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+:root {
+  --background-color: transparent;
+}
+
+body {
+  @apply bg-neutral-900 antialiased text-neutral-200;
+}
