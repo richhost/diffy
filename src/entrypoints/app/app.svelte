@@ -1,14 +1,16 @@
 <script lang="ts">
   import Loader4 from "@tabler/icons-svelte-runes/icons/loader-4";
-  import { type GraphData, graphStore } from "@/stores/graph.svelte";
+  import { type GraphData, graphStore } from "~/stores/graph.svelte";
   import { SvelteFlow, Background, MiniMap, Controls } from "@xyflow/svelte";
   import "@xyflow/svelte/dist/style.css";
-  import JsonNode from "@/components/json-node.svelte";
+  import JsonNode from "~/components/json-node.svelte";
+  import DiffEdge from "~/components/diff-edge.svelte";
 
   let nodes = $state.raw<GraphData["nodes"]>([]);
   let edges = $state.raw<GraphData["edges"]>([]);
 
   const nodeTypes = { json: JsonNode };
+  const edgeTypes = { diff: DiffEdge };
 
   $effect(() => {
     graphStore.init();
@@ -19,9 +21,6 @@
   });
 
   const isEmpty = $derived(graphStore.nodes.length === 0);
-
-  $inspect(nodes);
-  $inspect(edges);
 </script>
 
 <div class="w-screen h-screen">
@@ -36,6 +35,7 @@
       bind:nodes
       bind:edges
       {nodeTypes}
+      {edgeTypes}
       fitView
       defaultEdgeOptions={{ type: "diff", animated: true }}
     >

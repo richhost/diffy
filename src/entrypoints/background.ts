@@ -15,7 +15,7 @@ export default defineBackground(() => {
         await browser.tabs.remove(tabIds);
       }
     } else {
-      await browser.tabs.create({ url: appUrl, pinned: true });
+      await browser.tabs.create({ url: appUrl, pinned: false });
     }
   });
 });

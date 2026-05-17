@@ -3,8 +3,15 @@ import { storage } from "@wxt-dev/storage";
 
 const STORAGE_KEY = "local:diffy:graph:v1";
 
+type NodeData = {
+  label: string;
+  json: string;
+};
+
+export type JasonNode = Node<NodeData>;
+
 export interface GraphData {
-  nodes: Node[];
+  nodes: JasonNode[];
   edges: Edge[];
   nodeCounter: number;
 }
@@ -62,7 +69,7 @@ const DEFAULT_GRAPH: GraphData = {
 };
 
 class GraphStore {
-  nodes = $state.raw<Node[]>([]);
+  nodes = $state.raw<JasonNode[]>([]);
   edges = $state.raw<Edge[]>([]);
   nodeCounter = $state(DEFAULT_GRAPH.nodeCounter);
   loading = $state(true);
@@ -102,7 +109,7 @@ class GraphStore {
     this.loading = false;
   }
 
-  setNodes(newNodes: Node[]) {
+  setNodes(newNodes: JasonNode[]) {
     this.nodes = newNodes;
     if (!this.loading) this.persist();
   }
@@ -132,7 +139,7 @@ class GraphStore {
     patch: Partial<{ label: string; json: string }>,
   ) {
     this.nodes = this.nodes.map((n) =>
-      n.id === nodeId ? { ...n, data: { ...(n.data as object), ...patch } } : n,
+      n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n,
     );
     this.persist();
   }
@@ -150,7 +157,7 @@ class GraphStore {
   }
 
   importJSON(raw: string) {
-    const parsed = JSON.parse(raw) as { nodes: Node[]; edges: Edge[] };
+    const parsed = JSON.parse(raw) as { nodes: JasonNode[]; edges: Edge[] };
     if (!Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges))
       throw new Error("Invalid graph JSON");
     const maxId = parsed.nodes.reduce(
