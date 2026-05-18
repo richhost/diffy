@@ -5,6 +5,7 @@
   import "@xyflow/svelte/dist/style.css";
   import JsonNode from "~/components/json-node.svelte";
   import DiffEdge from "~/components/diff-edge.svelte";
+  import JsonEditorDialog from "@/components/json-editor-dialog.svelte";
 
   let nodes = $state.raw<GraphData["nodes"]>([]);
   let edges = $state.raw<GraphData["edges"]>([]);
@@ -61,3 +62,4 @@
     </SvelteFlow>
   {/if}
 </div>
+<JsonEditorDialog />
