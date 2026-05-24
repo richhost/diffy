@@ -1,24 +1,18 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import Loader4 from "@tabler/icons-svelte-runes/icons/loader-4";
-  import { type GraphData, graphStore } from "~/stores/graph.svelte";
+  import { graphStore } from "~/stores/graph.svelte";
   import { SvelteFlow, Background, MiniMap, Controls } from "@xyflow/svelte";
   import "@xyflow/svelte/dist/style.css";
   import JsonNode from "~/components/json-node.svelte";
   import DiffEdge from "~/components/diff-edge.svelte";
   import JsonEditorDialog from "@/components/json-editor-dialog.svelte";
 
-  let nodes = $state.raw<GraphData["nodes"]>([]);
-  let edges = $state.raw<GraphData["edges"]>([]);
-
   const nodeTypes = { json: JsonNode };
   const edgeTypes = { diff: DiffEdge };
 
-  $effect(() => {
+  onMount(() => {
     graphStore.init();
-  });
-  $effect(() => {
-    nodes = graphStore.nodes;
-    edges = graphStore.edges;
   });
 
   const isEmpty = $derived(graphStore.nodes.length === 0);
@@ -33,8 +27,8 @@
     <SvelteFlow
       proOptions={{ hideAttribution: true }}
       colorMode="dark"
-      bind:nodes
-      bind:edges
+      bind:nodes={graphStore.nodes}
+      bind:edges={graphStore.edges}
       {nodeTypes}
       {edgeTypes}
       fitView
@@ -46,7 +40,7 @@
 
       {#if isEmpty}
         <div
-          class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"
+          class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-4 duration-500"
         >
           <div>⬡</div>
           <h2>No nodes yet</h2>

@@ -8,9 +8,7 @@ export default defineBackground(() => {
     const tabs = await browser.tabs.query({ url: matchUrl });
 
     if (tabs.length > 0) {
-      const tabIds = tabs
-        .map((tab) => tab.id)
-        .filter((id): id is number => id !== undefined);
+      const tabIds = tabs.map((tab) => tab.id).filter((id): id is number => id !== undefined);
       if (tabIds.length > 0) {
         await browser.tabs.remove(tabIds);
       }

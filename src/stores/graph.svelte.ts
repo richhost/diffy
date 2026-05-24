@@ -63,9 +63,7 @@ const DEFAULT_GRAPH: GraphData = {
       },
     },
   ],
-  edges: [
-    { id: "e1-2", source: "1", target: "2", type: "diff", animated: true },
-  ],
+  edges: [{ id: "e1-2", source: "1", target: "2", type: "diff", animated: true }],
 };
 
 class GraphStore {
@@ -134,10 +132,7 @@ class GraphStore {
     return id;
   }
 
-  updateNodeData(
-    nodeId: string,
-    patch: Partial<{ label: string; json: string }>,
-  ) {
+  updateNodeData(nodeId: string, patch: Partial<{ label: string; json: string }>) {
     this.nodes = this.nodes.map((n) =>
       n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n,
     );
@@ -152,6 +147,12 @@ class GraphStore {
     this.persist();
   }
 
+  deleteNode(nodeId: string) {
+    this.nodes = this.nodes.filter((n) => n.id !== nodeId);
+    this.edges = this.edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
+    this.persist();
+  }
+
   exportJSON(): string {
     return JSON.stringify({ nodes: this.nodes, edges: this.edges }, null, 2);
   }
@@ -160,10 +161,7 @@ class GraphStore {
     const parsed = JSON.parse(raw) as { nodes: JasonNode[]; edges: Edge[] };
     if (!Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges))
       throw new Error("Invalid graph JSON");
-    const maxId = parsed.nodes.reduce(
-      (m, n) => Math.max(m, Number(n.id) || 0),
-      0,
-    );
+    const maxId = parsed.nodes.reduce((m, n) => Math.max(m, Number(n.id) || 0), 0);
     this.nodes = parsed.nodes;
     this.edges = parsed.edges;
     this.nodeCounter = maxId + 1;

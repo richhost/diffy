@@ -1,26 +1,51 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { EditorView, basicSetup } from "codemirror";
+  import { EditorState } from "@codemirror/state";
   import { json } from "@codemirror/lang-json";
+  import { oneDark } from "@codemirror/theme-one-dark";
 
   type Props = { value?: string; onChange?: (value: string) => void };
 
-  let { value, onChange }: Props = $props();
+  let { value = $bindable(), onChange }: Props = $props();
 
   let container: HTMLDivElement;
-  let view: EditorView | undefined = $state();
+  let view = $state.raw<EditorView | undefined>(undefined);
 
   $effect(() => {
     if (!container) return;
 
     view = new EditorView({
+      parent: container,
       doc: untrack(() => value),
       extensions: [
         basicSetup,
         json(),
+        oneDark,
+        EditorState.tabSize.of(2),
+        EditorView.theme({
+          "&": {
+            flex: "1",
+            minHeight: "0",
+            display: "flex",
+            flexDirection: "column",
+            background: "transparent !important",
+            fontSize: "14px !important",
+          },
+          ".cm-scroller": { overflow: "auto", flex: "1", minHeight: "0" },
+          ".cm-gutters": {
+            background: "transparent !important",
+            borderRight: "1px solid rgba(255, 255, 255, 0.08) !important",
+            color: "#6b7280 !important",
+          },
+        }),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
-            untrack(() => onChange?.(update.state.doc.toString()));
+            const next = update.state.doc.toString();
+            untrack(() => {
+              value = next;
+              onChange?.(next);
+            });
           }
         }),
         EditorView.domEventHandlers({
@@ -88,4 +113,18 @@
   });
 </script>
 
-<div bind:this={container}></div>
+<div bind:this={container} class="flex-1 min-h-0 flex flex-col"></div>
+
+<style>
+  :global(.cm-editor) {
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  :global(.cm-scroller) {
+    overflow: auto !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
+</style>
