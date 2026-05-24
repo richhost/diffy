@@ -18,14 +18,7 @@
 
   type TokenLine = ThemedToken[];
 
-  let lines = $state<TokenLine[]>([]);
-  let bg = $state("#1e1e1e");
-
-  $effect(() => {
-    loadTokens(code, theme);
-  });
-
-  async function loadTokens(c: string, t: string) {
+  async function highlight(c: string, t: string) {
     if (maxLines !== undefined) {
       const linesArr = c.split("\n");
       if (linesArr.length > maxLines) {
@@ -42,35 +35,41 @@
       langs: ["json"],
     });
     const result = highlighter.codeToTokens(c, { lang: "json", theme: t });
-    lines = result.tokens;
-    bg = result.bg ?? "#1e1e1e";
+    return {
+      tokens: result.tokens as TokenLine[],
+      bg: result.bg ?? "#1e1e1e",
+    };
   }
 
-  const visibleLines = $derived(lines.slice(0, maxLines));
-  const isTruncated = $derived(lines.length > maxLines);
+  const highlightPromise = $derived(highlight(code, theme));
   const compactHeight = $derived(maxLines * lineHeight);
 </script>
 
 <div
   style:height="{compactHeight}px"
-  style:background={bg}
   class="relative overflow-hidden font-mono text-[10px]"
 >
-  {#each visibleLines as tokenLine, i}
-    <div
-      style:height="{lineHeight}px"
-      style:top="{i * lineHeight}px"
-      class="absolute left-0 w-full flex items-center px-2 whitespace-pre"
-    >
-      {#each tokenLine as token}
-        <span style:color={token.color}>{token.content}</span>
+  {#await highlightPromise then result}
+    {@const visibleLines = result.tokens.slice(0, maxLines)}
+    {@const isTruncated = result.tokens.length > maxLines}
+    <div class="absolute inset-0" style:background={result.bg}>
+      {#each visibleLines as tokenLine, i}
+        <div
+          style:height="{lineHeight}px"
+          style:top="{i * lineHeight}px"
+          class="absolute left-0 w-full flex items-center px-2 whitespace-pre"
+        >
+          {#each tokenLine as token}
+            <span style:color={token.color}>{token.content}</span>
+          {/each}
+        </div>
       {/each}
+      {#if isTruncated}
+        <div
+          class="absolute bottom-0 left-0 right-0 h-5 pointer-events-none"
+          style="background: linear-gradient(to bottom, transparent, {result.bg});"
+        ></div>
+      {/if}
     </div>
-  {/each}
-  {#if isTruncated}
-    <div
-      class="absolute bottom-0 left-0 right-0 h-5 pointer-events-none"
-      style="background: linear-gradient(to bottom, transparent, {bg});"
-    ></div>
-  {/if}
+  {/await}
 </div>
