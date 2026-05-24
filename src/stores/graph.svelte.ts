@@ -153,6 +153,11 @@ class GraphStore {
     this.persist();
   }
 
+  deleteEdge(edgeId: string) {
+    this.edges = this.edges.filter((e) => e.id !== edgeId);
+    this.persist();
+  }
+
   exportJSON(): string {
     return JSON.stringify({ nodes: this.nodes, edges: this.edges }, null, 2);
   }
