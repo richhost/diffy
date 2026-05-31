@@ -3,7 +3,19 @@
   import { EditorView, basicSetup } from "codemirror";
   import { EditorState } from "@codemirror/state";
   import { json } from "@codemirror/lang-json";
-  import { oneDark } from "@codemirror/theme-one-dark";
+  import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+  import { tags as t } from "@lezer/highlight";
+
+  const pierreLightHighlightStyle = HighlightStyle.define([
+    { tag: t.propertyName, color: "#d73a49" },
+    { tag: t.string, color: "#22863a" },
+    { tag: t.number, color: "#005cc5" },
+    { tag: t.bool, color: "#005cc5" },
+    { tag: t.null, color: "#005cc5" },
+    { tag: t.separator, color: "#1d1d1f" },
+    { tag: t.brace, color: "#1d1d1f" },
+    { tag: t.bracket, color: "#1d1d1f" },
+  ]);
 
   type Props = { value?: string; onChange?: (value: string) => void };
 
@@ -21,7 +33,7 @@
       extensions: [
         basicSetup,
         json(),
-        oneDark,
+        syntaxHighlighting(pierreLightHighlightStyle),
         EditorState.tabSize.of(2),
         EditorView.theme({
           "&": {
@@ -30,13 +42,22 @@
             display: "flex",
             flexDirection: "column",
             background: "transparent !important",
-            fontSize: "14px !important",
+            fontSize: "13px !important",
+            fontFamily:
+              "'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace",
           },
           ".cm-scroller": { overflow: "auto", flex: "1", minHeight: "0" },
           ".cm-gutters": {
             background: "transparent !important",
-            borderRight: "1px solid rgba(255, 255, 255, 0.08) !important",
-            color: "#6b7280 !important",
+            borderRight: "1px solid rgba(0,0,0,0.08) !important",
+            color: "#aeaeb2 !important",
+            paddingRight: "8px",
+          },
+          ".cm-activeLineGutter": { background: "transparent !important" },
+          ".cm-activeLine": { background: "rgba(0,0,0,0.025) !important" },
+          ".cm-cursor": { borderLeftColor: "#0071e3 !important" },
+          ".cm-selectionBackground": {
+            background: "rgba(0,113,227,0.12) !important",
           },
         }),
         EditorView.updateListener.of((update) => {
@@ -60,22 +81,26 @@
               const trimmed = pastedText.trim();
               let parsed: any = null;
 
-              // Check if it looks like a stringified JSON (wrapped in quotes)
               if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-                const unquoted = JSON.parse(trimmed);
-                if (typeof unquoted === "string") {
-                  parsed = JSON.parse(unquoted);
+                const unescaped = JSON.parse(trimmed);
+                if (typeof unescaped === "string") {
+                  parsed = JSON.parse(unescaped);
+                } else {
+                  parsed = unescaped;
+                }
+              } else {
+                try {
+                  parsed = JSON.parse(trimmed);
+                } catch (innerErr) {
+                  const replaced = trimmed.replace(/\\"/g, '"');
+                  parsed = JSON.parse(replaced);
                 }
               }
-              // Otherwise, just see if it's standard JSON that needs formatting
-              else if (
-                (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-                (trimmed.startsWith("[") && trimmed.endsWith("]"))
-              ) {
-                parsed = JSON.parse(trimmed);
+
+              if (typeof parsed === "string") {
+                parsed = JSON.parse(parsed);
               }
 
-              // If we successfully parsed into an object/array, format and insert
               if (typeof parsed === "object" && parsed !== null) {
                 const formatted = JSON.stringify(parsed, null, 2);
 
@@ -86,11 +111,9 @@
                   scrollIntoView: true,
                 });
 
-                return true; // Prevent default paste
+                return true;
               }
-            } catch (e) {
-              // Not a valid JSON payload, allow default paste behavior
-            }
+            } catch (e) {}
 
             return false;
           },

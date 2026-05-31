@@ -11,9 +11,9 @@
 
   let {
     code,
-    theme = "pierre-dark",
-    lineHeight = 20,
-    maxLines = 7,
+    theme = "pierre-light",
+    lineHeight = 18,
+    maxLines = 8,
   }: Props = $props();
 
   type TokenLine = ThemedToken[];
@@ -31,13 +31,13 @@
     }
 
     const highlighter = await getSharedHighlighter({
-      themes: [t],
+      themes: [t, "pierre-light"],
       langs: ["json"],
     });
     const result = highlighter.codeToTokens(c, { lang: "json", theme: t });
     return {
       tokens: result.tokens as TokenLine[],
-      bg: result.bg ?? "#1e1e1e",
+      bg: "transparent",
     };
   }
 
@@ -47,17 +47,17 @@
 
 <div
   style:height="{compactHeight}px"
-  class="relative overflow-hidden font-mono text-[10px]"
+  class="relative overflow-hidden font-mono text-[11px] px-3.5 py-2.5 bg-[#f5f5f7]"
 >
   {#await highlightPromise then result}
     {@const visibleLines = result.tokens.slice(0, maxLines)}
     {@const isTruncated = result.tokens.length > maxLines}
-    <div class="absolute inset-0" style:background={result.bg}>
+    <div class="absolute inset-0 px-3.5 py-2.5">
       {#each visibleLines as tokenLine, i}
         <div
           style:height="{lineHeight}px"
-          style:top="{i * lineHeight}px"
-          class="absolute left-0 w-full flex items-center px-2 whitespace-pre"
+          style:top="{i * lineHeight + 10}px"
+          class="absolute left-0 w-full flex items-center px-3.5 whitespace-pre"
         >
           {#each tokenLine as token}
             <span style:color={token.color}>{token.content}</span>
@@ -66,8 +66,8 @@
       {/each}
       {#if isTruncated}
         <div
-          class="absolute bottom-0 left-0 right-0 h-5 pointer-events-none"
-          style="background: linear-gradient(to bottom, transparent, {result.bg});"
+          class="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
+          style="background: linear-gradient(to bottom, transparent, #f5f5f7);"
         ></div>
       {/if}
     </div>

@@ -1,5 +1,4 @@
 export default defineBackground(() => {
-  // Use browser.action in MV3 and browser.browserAction in MV2 (Firefox)
   const action = browser.action ?? browser.browserAction;
 
   action.onClicked.addListener(async () => {

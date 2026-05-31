@@ -1,18 +1,115 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "gradient-border-plugin";
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
 
 :root {
   --background-color: transparent;
+  --font-sans: "Geist Sans", -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
 }
 
 body {
-  @apply bg-neutral-900 antialiased text-neutral-200;
+  font-family: var(--font-sans);
+  @apply bg-[#f5f5f7] antialiased text-[#1d1d1f];
 }
 
-/* Custom Scrollbar Styles */
+.svelte-flow .svelte-flow__node.selected > *,
+.svelte-flow .svelte-flow__node:focus > *,
+.svelte-flow .svelte-flow__node:focus-visible > * {
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 0 0 0.5px rgba(0, 0, 0, 0.08) !important;
+  outline: none !important;
+}
+
+.svelte-flow .svelte-flow__node:focus,
+.svelte-flow .svelte-flow__node:focus-visible {
+  outline: none !important;
+}
+
+.svelte-flow .svelte-flow__handle {
+  width: 16px !important;
+  height: 16px !important;
+  background: #ffffff !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.15) !important;
+  border-radius: 50% !important;
+  box-shadow: inset 0 0 0 4px #f5f5f7 !important;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease !important;
+}
+
+.svelte-flow .svelte-flow__handle:hover {
+  border-color: #0071e3 !important;
+  box-shadow:
+    inset 0 0 0 1px #f5f5f7,
+    0 0 0 3px rgba(0, 113, 227, 0.15) !important;
+}
+
+.svelte-flow .svelte-flow__edge-path {
+  stroke: rgba(0, 0, 0, 0.2) !important;
+  stroke-width: 1.5px !important;
+}
+
+.svelte-flow .svelte-flow__edge.animated .svelte-flow__edge-path {
+  stroke-dasharray: 5 !important;
+}
+
+.svelte-flow .svelte-flow__edge-label-renderer .svelte-flow__edge-label,
+.svelte-flow .svelte-flow__edge-labels > div {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.svelte-flow .svelte-flow__controls {
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 0 0 0.5px rgba(0, 0, 0, 0.06) !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  border: none !important;
+}
+
+.svelte-flow .svelte-flow__controls-button {
+  border: none !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  background: white !important;
+  color: #6e6e73 !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.svelte-flow .svelte-flow__controls-button:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+  color: #1d1d1f !important;
+}
+
+.svelte-flow .svelte-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.svelte-flow .svelte-flow__minimap {
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 0 0 0.5px rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+}
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -20,156 +117,11 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-neutral-800, #262626);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 9999px;
+  transition: background-color 0.15s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-neutral-700, #404040);
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-neutral-800, #262626) transparent;
-}
-
-/* Gradient Border Utilities */
-@theme {
-  --gradient-border-width-1: 1px;
-  --gradient-border-width-2: 2px;
-  --gradient-border-width-3: 3px;
-  --gradient-border-width-4: 4px;
-}
-
-@utility gradient-border {
-  position: relative;
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: var(--gradient-border-width, 1px);
-    background: var(
-      --gradient-border,
-      linear-gradient(
-        var(--gradient-border-angle, to bottom),
-        var(--gradient-border-from, rgba(0, 0, 0, 0.15)),
-        var(--gradient-border-via, var(--gradient-border-from, rgba(0, 0, 0, 0.15))),
-        var(--gradient-border-to, transparent)
-      )
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    pointer-events: none;
-    transition:
-      background 0.3s ease,
-      opacity 0.3s ease;
-  }
-}
-
-@utility gradient-border-* {
-  position: relative;
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: --value(--gradient-border-width-*);
-    background: var(
-      --gradient-border,
-      linear-gradient(
-        var(--gradient-border-angle, to bottom),
-        var(--gradient-border-from, rgba(0, 0, 0, 0.15)),
-        var(--gradient-border-via, var(--gradient-border-from, rgba(0, 0, 0, 0.15))),
-        var(--gradient-border-to, transparent)
-      )
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    pointer-events: none;
-    transition:
-      background 0.3s ease,
-      opacity 0.3s ease;
-  }
-}
-
-@utility gradient-border-to-t {
-  --gradient-border-angle: to top;
-}
-@utility gradient-border-to-tr {
-  --gradient-border-angle: to top right;
-}
-@utility gradient-border-to-r {
-  --gradient-border-angle: to right;
-}
-@utility gradient-border-to-br {
-  --gradient-border-angle: to bottom right;
-}
-@utility gradient-border-to-b {
-  --gradient-border-angle: to bottom;
-}
-@utility gradient-border-to-bl {
-  --gradient-border-angle: to bottom left;
-}
-@utility gradient-border-to-l {
-  --gradient-border-angle: to left;
-}
-@utility gradient-border-to-tl {
-  --gradient-border-angle: to top left;
-}
-
-@utility gradient-border-from-* {
-  --gradient-border-from-alpha: calc(--modifier(integer) * 1%);
-  --gradient-border-from: --alpha(
-    --value(--color-*, [color]) / var(--gradient-border-from-alpha, 100%)
-  );
-}
-@utility gradient-border-to-* {
-  --gradient-border-to-alpha: calc(--modifier(integer) * 1%);
-  --gradient-border-to: --alpha(
-    --value(--color-*, [color]) / var(--gradient-border-to-alpha, 100%)
-  );
-}
-@utility gradient-border-via-* {
-  --gradient-border-via-alpha: calc(--modifier(integer) * 1%);
-  --gradient-border-via: --alpha(
-    --value(--color-*, [color]) / var(--gradient-border-via-alpha, 100%)
-  );
-}
-
-@utility gradient-border-none {
-  &::before {
-    content: none !important;
-    background: none !important;
-  }
-}
-
-@property --gradient-border-rotation {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
-@keyframes gradient-border {
-  to {
-    --gradient-border-rotation: 360deg;
-  }
-}
-
-@utility animate-gradient-border {
-  --gradient-border-angle: var(--gradient-border-rotation);
-  animation: gradient-border var(--gradient-border-duration, 4s) linear infinite;
+  background: rgba(0, 0, 0, 0.25);
 }

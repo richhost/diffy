@@ -10,52 +10,66 @@
 
   let { data, id }: NodeProps<JasonNode> = $props();
 
-  interface Preview {
-    error: boolean;
-    rootType: "object" | "array" | "primitive" | "error";
-    badge: string;
-  }
-
-  let preview = $state<Preview>({
-    error: false,
-    rootType: "object",
-    badge: "{ }",
-  });
-
   $inspect(data, id);
 </script>
 
+<!--
+  根容器不能加 overflow-hidden，否则 Handle 会被裁剪导致无法连线。
+  圆角视觉由 node-card 的 border-radius + 子元素各自处理。
+-->
 <div
   tabindex="0"
   role="button"
-  class="flex flex-col w-60 border border-white/[0.08] rounded-md overflow-hidden bg-[#0d0e10] group transition-all duration-200 outline-none hover:border-neutral-500"
+  class="node-card flex flex-col w-64 rounded-xl bg-white group outline-none transition-shadow duration-200"
 >
   <Handle type="target" position={Position.Left} />
   <Handle type="source" position={Position.Right} />
 
-  <div
-    class="px-4 py-2 flex items-center justify-between border-b border-white/[0.08] transition-colors duration-200"
-  >
-    <span class="font-semibold">{data.label}</span>
+  <!-- Header（顶部圆角跟随父元素，无需额外设置）-->
+  <div class="px-4 py-3 flex items-center justify-between min-h-[44px] rounded-t-xl">
+    <span class="text-[13px] font-semibold text-[#1d1d1f] tracking-[-0.01em] select-none">
+      {data.label}
+    </span>
     <div
-      class="text-neutral-400 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+      class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto"
     >
       <button
         onclick={() => editorStore.openEditor(id, data.label, data.json)}
-        class="w-6 h-6 place-items-center grid text-center rounded-sm hover:text-neutral-200 transition-colors cursor-pointer"
+        class="w-6 h-6 grid place-items-center rounded-md text-[#8e8e93] hover:text-[#1d1d1f] hover:bg-black/5 transition-all duration-100 cursor-pointer"
         aria-label="Edit JSON"
       >
-        <Code class="size-4" />
+        <Code class="size-3.5" />
       </button>
       <button
         onclick={() => graphStore.deleteNode(id)}
-        class="w-6 h-6 place-items-center grid bg-red-800/30 rounded-sm hover:text-red-700 transition-colors cursor-pointer"
+        class="w-6 h-6 grid place-items-center rounded-md text-[#8e8e93] hover:text-[#ff3b30] hover:bg-black/5 transition-all duration-100 cursor-pointer"
         aria-label="Delete Node"
       >
-        <Trash class="size-4" />
+        <Trash class="size-3.5" />
       </button>
     </div>
   </div>
 
-  <JsonViewer code={data.json} />
+  <!-- Hairline divider -->
+  <div class="h-px bg-black/5"></div>
+
+  <div class="rounded-b-xl overflow-hidden">
+    <JsonViewer code={data.json} />
+  </div>
 </div>
+
+<style>
+  .node-card {
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.07),
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  }
+
+  .node-card:hover {
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.08),
+      0 1px 3px rgba(0, 0, 0, 0.05),
+      0 0 0 0.5px rgba(0, 0, 0, 0.07);
+  }
+</style>

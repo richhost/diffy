@@ -21,10 +21,8 @@
 
   function handleSave() {
     try {
-      // Validate that the edited string is valid JSON
       const parsed = JSON.parse(jsonValue);
       const formatted = JSON.stringify(parsed, null, 2);
-
       if (editorStore.target) {
         graphStore.updateNodeData(editorStore.target.nodeId, {
           label: labelValue.trim() || "Untitled Node",
@@ -40,6 +38,151 @@
   function handleCancel() {
     editorStore.close();
   }
+
+  function deepParseJSON(val: any): any {
+    if (typeof val === "string") {
+      const trimmed = val.trim();
+      if (
+        (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+        (trimmed.startsWith("[") && trimmed.endsWith("]"))
+      ) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          return deepParseJSON(parsed);
+        } catch (e) {
+          return val;
+        }
+      }
+      
+      if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+        try {
+          const unescaped = JSON.parse(trimmed);
+          return deepParseJSON(unescaped);
+        } catch (e) {
+          return val;
+        }
+      }
+      
+      return val;
+    }
+    
+    if (Array.isArray(val)) {
+      return val.map(item => deepParseJSON(item));
+    }
+    
+    if (typeof val === "object" && val !== null) {
+      const copy: any = {};
+      for (const key in val) {
+        if (Object.prototype.hasOwnProperty.call(val, key)) {
+          copy[key] = deepParseJSON(val[key]);
+        }
+      }
+      return copy;
+    }
+    
+    return val;
+  }
+
+  function handleDeepParse() {
+    let raw = jsonValue.trim();
+    if (!raw) return;
+
+    try {
+      let parsed: any;
+      
+      if (raw.startsWith('"') && raw.endsWith('"')) {
+        const unescaped = JSON.parse(raw);
+        if (typeof unescaped === "string") {
+          parsed = JSON.parse(unescaped);
+        } else {
+          parsed = unescaped;
+        }
+      } else {
+        try {
+          parsed = JSON.parse(raw);
+        } catch (innerErr) {
+          const replaced = raw.replace(/\\"/g, '"');
+          parsed = JSON.parse(replaced);
+        }
+      }
+
+      if (typeof parsed === "string") {
+        parsed = JSON.parse(parsed);
+      }
+
+      const deepParsed = deepParseJSON(parsed);
+
+      if (typeof deepParsed === "object" && deepParsed !== null) {
+        jsonValue = JSON.stringify(deepParsed, null, 2);
+        jsonError = null;
+      } else {
+        jsonError = "Parsed value is not a valid JSON object or array.";
+      }
+    } catch (e: any) {
+      jsonError = "Failed to parse: " + (e.message || "Invalid JSON");
+    }
+  }
+
+  function checkCanDeepParse(val: any): boolean {
+    if (typeof val === "string") {
+      const trimmed = val.trim();
+      if (
+        (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+        (trimmed.startsWith("[") && trimmed.endsWith("]"))
+      ) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (typeof parsed === "object" && parsed !== null) {
+            return true;
+          }
+        } catch (e) {}
+      }
+      return false;
+    }
+    
+    if (Array.isArray(val)) {
+      return val.some(item => checkCanDeepParse(item));
+    }
+    
+    if (typeof val === "object" && val !== null) {
+      for (const key in val) {
+        if (Object.prototype.hasOwnProperty.call(val, key)) {
+          if (checkCanDeepParse(val[key])) {
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
+  }
+
+  const showDeepParseButton = $derived.by(() => {
+    const raw = jsonValue.trim();
+    if (!raw) return false;
+    try {
+      let parsed: any;
+      if (raw.startsWith('"') && raw.endsWith('"')) {
+        const unescaped = JSON.parse(raw);
+        parsed = (typeof unescaped === "string") ? JSON.parse(unescaped) : unescaped;
+      } else {
+        try {
+          parsed = JSON.parse(raw);
+        } catch (innerErr) {
+          const replaced = raw.replace(/\\"/g, '"');
+          parsed = JSON.parse(replaced);
+        }
+      }
+      
+      if (typeof parsed === "string") {
+        parsed = JSON.parse(parsed);
+      }
+      
+      return checkCanDeepParse(parsed);
+    } catch (e) {
+      return false;
+    }
+  });
 </script>
 
 <Dialog.Root
@@ -49,26 +192,26 @@
   }}
 >
   <Portal>
+    <!-- Backdrop -->
     <Dialog.Backdrop
-      class="fixed inset-0 z-40 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
+      class="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px] animate-in fade-in duration-200"
     />
+
     <Dialog.Positioner
       class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
     >
       <Dialog.Content
-        class="w-full max-w-xl bg-neutral-900/95 border border-white/[0.08] rounded-xl shadow-2xl shadow-black/80 overflow-hidden flex flex-col max-h-[85vh] text-neutral-100 animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-200"
+        class="w-full max-w-lg bg-white rounded-2xl overflow-hidden flex flex-col max-h-[85vh] text-[#1d1d1f] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200"
+        style="box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.08);"
       >
         <!-- Header -->
-        <div
-          class="px-6 py-4 border-b border-white/[0.06] flex justify-between items-center bg-neutral-900/40"
-        >
-          <Dialog.Title
-            class="text-sm font-semibold text-neutral-200 tracking-tight"
-            >Edit Node</Dialog.Title
-          >
+        <div class="px-6 pt-5 pb-4 flex justify-between items-start">
+          <Dialog.Title class="text-[15px] font-semibold text-[#1d1d1f] tracking-tight">
+            Edit Node
+          </Dialog.Title>
           <Dialog.CloseTrigger
             onclick={handleCancel}
-            class="text-neutral-400 hover:text-neutral-200 transition-all cursor-pointer p-1 rounded-md hover:bg-white/[0.06]"
+            class="w-7 h-7 grid place-items-center rounded-full text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/6 transition-all cursor-pointer -mr-1 -mt-0.5"
             aria-label="Close"
           >
             <X class="size-4" />
@@ -76,14 +219,12 @@
         </div>
 
         <!-- Body -->
-        <div
-          class="p-6 flex-1 overflow-hidden space-y-5 bg-transparent flex flex-col"
-        >
-          <!-- Node Label -->
-          <div class="space-y-1.5 flex-none">
+        <div class="px-6 pb-4 flex-1 overflow-hidden flex flex-col gap-4 min-h-0">
+          <!-- Label field -->
+          <div class="flex flex-col gap-1.5">
             <label
               for="node-label"
-              class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block"
+              class="text-[11px] font-semibold text-[#6e6e73] tracking-tight"
             >
               Label
             </label>
@@ -92,27 +233,31 @@
               type="text"
               bind:value={labelValue}
               placeholder="Node Label"
-              class="w-full bg-neutral-950/40 border border-white/8 rounded-md px-3.5 py-2.5 text-neutral-200 focus:outline-none focus:border-neutral-400 focus:ring-2 focus:ring-white/4 text-sm font-medium transition-all"
+              class="w-full bg-[#f5f5f7] rounded-lg px-3.5 py-2.5 text-[13px] text-[#1d1d1f] placeholder-[#aeaeb2] font-medium outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
             />
           </div>
 
-          <!-- JSON Content -->
-          <div class="space-y-1.5 flex flex-col flex-1 min-h-0">
-            <span
-              class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block"
-            >
-              JSON Content
-            </span>
-            <div
-              class="flex-1 border border-white/8 rounded-md overflow-hidden bg-neutral-950/40 flex flex-col min-h-0"
-            >
+          <!-- JSON editor -->
+          <div class="flex flex-col gap-1.5 flex-1 min-h-0">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-semibold text-[#6e6e73] tracking-tight select-none">
+                JSON Content
+              </span>
+              {#if showDeepParseButton}
+                <button
+                  onclick={handleDeepParse}
+                  class="px-2 py-0.5 rounded text-[11px] font-semibold text-[#0071e3] hover:bg-[#0071e3]/10 transition-colors duration-150 cursor-pointer tracking-tight animate-in fade-in duration-200"
+                  title="Deeply parse any nested stringified JSON fields recursively"
+                >
+                  Deep Parse
+                </button>
+              {/if}
+            </div>
+            <div class="flex-1 bg-[#f5f5f7] rounded-lg overflow-hidden flex flex-col min-h-[240px]">
               <JsonEditor bind:value={jsonValue} />
             </div>
             {#if jsonError}
-              <div
-                class="text-xs text-red-400 font-mono bg-red-950/20 border border-red-900/40 rounded-md px-3 py-2 mt-2 flex-none"
-              >
-                <strong>JSON Error:</strong>
+              <div class="text-[11px] text-red-500 font-mono bg-red-50 rounded-lg px-3 py-2 flex-none">
                 {jsonError}
               </div>
             {/if}
@@ -120,23 +265,20 @@
         </div>
 
         <!-- Footer -->
-        <div
-          class="px-6 py-4 border-t border-white/6 bg-neutral-950/40 flex justify-end gap-3"
-        >
+        <div class="px-6 pb-5 flex justify-end gap-2">
           <button
             onclick={handleCancel}
-            class="px-4.5 py-2.5 border border-white/8 rounded-md hover:bg-white/6 text-neutral-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
+            class="px-4 py-2 rounded-lg text-[13px] text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/5 font-medium transition-all cursor-pointer"
           >
             Cancel
           </button>
           <button
             onclick={handleSave}
-            class="group px-4.5 py-2.5 bg-[#0b0c0e]/95 hover:bg-[#121316]/95 border border-transparent rounded-md text-neutral-200 hover:text-white text-xs font-semibold transition-all duration-300 ease-out cursor-pointer shadow-md shadow-cyan-950/10 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5 gradient-border gradient-border-to-r gradient-border-from-neutral-700/40 gradient-border-via-cyan-500/50 gradient-border-to-neutral-700/40 hover:gradient-border-from-neutral-500 hover:gradient-border-via-cyan-400 hover:gradient-border-to-neutral-500 active:gradient-border-from-neutral-800 active:gradient-border-via-cyan-600 active:gradient-border-to-neutral-800"
+            class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-medium text-white transition-all cursor-pointer hover:opacity-90 active:scale-[0.98]"
+            style="background: #0071e3;"
           >
-            <Check
-              class="size-3.5 text-neutral-400 group-hover:text-cyan-300 transition-colors duration-300"
-            />
-            Save Changes
+            <Check class="size-3.5" />
+            Save
           </button>
         </div>
       </Dialog.Content>

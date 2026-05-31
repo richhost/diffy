@@ -1,16 +1,18 @@
 <script lang="ts">
   import { Dialog } from "@ark-ui/svelte/dialog";
   import { Portal } from "@ark-ui/svelte/portal";
-  import { FileDiff, parseDiffFromFile, getSharedHighlighter, wrapCoreCSS } from "@pierre/diffs";
+  import {
+    FileDiff,
+    parseDiffFromFile,
+    getSharedHighlighter,
+    wrapCoreCSS,
+  } from "@pierre/diffs";
   import X from "@tabler/icons-svelte-runes/icons/x";
-  import LayoutColumns from "@tabler/icons-svelte-runes/icons/layout-columns";
-  import LayoutRows from "@tabler/icons-svelte-runes/icons/layout-rows";
   import { diffStore } from "~/stores/diff.svelte";
 
-  // Safely define the diffs-container custom element locally using public exports
+  // Register diffs-container custom element
   if (typeof window !== "undefined" && !customElements.get("diffs-container")) {
     const coreStyles = wrapCoreCSS("");
-
     class FileDiffContainer extends HTMLElement {
       constructor() {
         super();
@@ -27,41 +29,37 @@
   let diffContainer = $state<HTMLDivElement | null>(null);
   let diffStyle = $state<"split" | "unified">("split");
 
-  // Keep rendering and config updated Reactively via nested $effects
+  const themeOverrides = `
+    color-scheme: light;
+    --diffs-light-bg: #ffffff;
+    --diffs-light: #1d1d1f;
+    --diffs-fg-number-override: #aeaeb2;
+    --diffs-bg-separator-override: #f5f5f7;
+    --diffs-bg-context-override: #fafafa;
+    --diffs-bg-context-gutter-override: #f5f5f7;
+  `;
+
   $effect(() => {
     if (!diffStore.open || !diffContainer) return;
 
     const container = document.createElement("diffs-container");
     diffContainer.appendChild(container);
 
-    // Match the project's neutral-900 dark palette via CSS variable overrides
-    const themeOverrides = `
-      color-scheme: dark;
-      --diffs-dark-bg: #171717;
-      --diffs-dark: #e5e5e5;
-      --diffs-fg-number-override: #525252;
-      --diffs-bg-separator-override: #1f1f1f;
-      --diffs-bg-context-override: #1c1c1c;
-      --diffs-bg-context-gutter-override: #1a1a1a;
-    `;
-
     const instance = new FileDiff({
       diffStyle: $state.snapshot(diffStyle),
-      theme: "pierre-dark",
+      theme: "pierre-light",
       unsafeCSS: themeOverrides,
-      themeType: "dark",
+      themeType: "light",
     });
 
     let active = true;
 
     async function render(currentStyle: "split" | "unified") {
       try {
-        // Preload themes and languages for the shared highlighter
         await getSharedHighlighter({
-          themes: ["pierre-dark"],
+          themes: ["pierre-light"],
           langs: ["json"],
         });
-
         if (!active) return;
 
         const oldFile = {
@@ -72,14 +70,13 @@
           name: (diffStore.targetLabel || "target") + ".json",
           contents: diffStore.targetJson,
         };
-
         const fileDiff = parseDiffFromFile(oldFile, newFile);
 
         instance.setOptions({
           diffStyle: currentStyle,
-          theme: "pierre-dark",
+          theme: "pierre-light",
           unsafeCSS: themeOverrides,
-          themeType: "dark",
+          themeType: "light",
         });
 
         instance.render({
@@ -93,15 +90,12 @@
       }
     }
 
-    // Reactively trigger render when style or json changes
     $effect(() => {
-      // Establish reactive dependencies on style and json inputs
       const currentStyle = diffStyle;
       const _src = diffStore.sourceJson;
       const _tgt = diffStore.targetJson;
       const _srcLbl = diffStore.sourceLabel;
       const _tgtLbl = diffStore.targetLabel;
-
       render(currentStyle);
     });
 
@@ -124,103 +118,78 @@
   }}
 >
   <Portal>
+    <!-- Backdrop -->
     <Dialog.Backdrop
-      class="fixed inset-0 z-40 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
+      class="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px] animate-in fade-in duration-200"
     />
+
     <Dialog.Positioner
       class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
     >
       <Dialog.Content
-        class="w-full max-w-5xl bg-neutral-900/95 border border-white/[0.08] rounded-xl shadow-2xl shadow-black/80 overflow-hidden flex flex-col h-[80vh] text-neutral-100 animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-200"
+        class="w-full max-w-5xl bg-white rounded-2xl overflow-hidden flex flex-col h-[82vh] text-[#1d1d1f] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200"
+        style="box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.08);"
       >
         <!-- Header -->
-        <div
-          class="px-6 py-4 border-b border-white/[0.06] flex justify-between items-center bg-neutral-900/40"
-        >
+        <div class="px-6 pt-5 pb-4 flex justify-between items-start flex-none">
           <div class="flex flex-col gap-0.5">
             <Dialog.Title
-              class="text-sm font-semibold text-neutral-200 tracking-tight"
+              class="text-[15px] font-semibold text-[#1d1d1f] tracking-tight"
             >
-              Comparing Changes
+              Compare
             </Dialog.Title>
-            <div class="text-[10px] text-neutral-400 font-mono">
+            <div class="text-[11px] text-[#aeaeb2] font-mono">
               {diffStore.sourceLabel || "source"} → {diffStore.targetLabel ||
                 "target"}
             </div>
           </div>
-          <Dialog.CloseTrigger
-            onclick={handleClose}
-            class="text-neutral-400 hover:text-neutral-200 transition-all cursor-pointer p-1 rounded-md hover:bg-white/[0.06]"
-            aria-label="Close"
-          >
-            <X class="size-4" />
-          </Dialog.CloseTrigger>
+
+          <div class="flex items-center gap-3">
+            <!-- Layout toggle -->
+            <div
+              class="flex items-center bg-[#f5f5f7] rounded-lg p-0.5 gap-0.5"
+            >
+              <button
+                onclick={() => (diffStyle = "split")}
+                class="px-3 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer {diffStyle ===
+                'split'
+                  ? 'bg-white text-[#1d1d1f] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
+                  : 'text-[#6e6e73] hover:text-[#1d1d1f]'}"
+              >
+                Side by side
+              </button>
+              <button
+                onclick={() => (diffStyle = "unified")}
+                class="px-3 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer {diffStyle ===
+                'unified'
+                  ? 'bg-white text-[#1d1d1f] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
+                  : 'text-[#6e6e73] hover:text-[#1d1d1f]'}"
+              >
+                Unified
+              </button>
+            </div>
+
+            <Dialog.CloseTrigger
+              onclick={handleClose}
+              class="w-7 h-7 grid place-items-center rounded-full text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/6 transition-all cursor-pointer"
+              aria-label="Close"
+            >
+              <X class="size-4" />
+            </Dialog.CloseTrigger>
+          </div>
         </div>
 
-        <!-- Body -->
-        <div
-          class="p-6 flex-1 overflow-hidden bg-transparent flex flex-col min-h-0"
-        >
+        <!-- Divider -->
+        <div class="h-px bg-black/6 flex-none"></div>
+
+        <!-- Diff viewer body -->
+        <div class="flex-1 overflow-hidden min-h-0 bg-white">
           <div
             bind:this={diffContainer}
-            class="flex-1 overflow-auto border border-white/[0.06] rounded-md bg-[#171717] min-h-0 font-mono text-xs custom-scrollbar"
+            class="h-full overflow-auto font-mono text-xs"
           ></div>
-        </div>
-
-        <!-- Footer -->
-        <div
-          class="px-6 py-4 border-t border-white/[0.06] bg-neutral-950/40 flex justify-between items-center"
-        >
-          <!-- Toggle Layout Switcher -->
-          <div class="flex bg-neutral-900/60 p-0.5 rounded-lg border border-white/[0.04]">
-            <button
-              onclick={() => (diffStyle = "split")}
-              class="px-3 py-1.5 rounded-md text-[10px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer {diffStyle ===
-              'split'
-                ? 'bg-neutral-800 text-white shadow-sm'
-                : 'text-neutral-400 hover:text-neutral-200'}"
-            >
-              <LayoutColumns class="size-3.5" />
-              Side-by-Side
-            </button>
-            <button
-              onclick={() => (diffStyle = "unified")}
-              class="px-3 py-1.5 rounded-md text-[10px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer {diffStyle ===
-              'unified'
-                ? 'bg-neutral-800 text-white shadow-sm'
-                : 'text-neutral-400 hover:text-neutral-200'}"
-            >
-              <LayoutRows class="size-3.5" />
-              Unified
-            </button>
-          </div>
-
-          <button
-            onclick={handleClose}
-            class="px-4.5 py-2 border border-white/[0.08] rounded-md hover:bg-white/[0.06] text-neutral-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
-          >
-            Close
-          </button>
         </div>
       </Dialog.Content>
     </Dialog.Positioner>
   </Portal>
 </Dialog.Root>
-
-<style>
-  /* Custom scrollbar for diff container */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 9999px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-</style>

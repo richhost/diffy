@@ -22,7 +22,7 @@ const DEFAULT_GRAPH: GraphData = {
     {
       id: "1",
       type: "json",
-      position: { x: 80, y: 100 },
+      position: { x: 100, y: 150 },
       data: {
         label: "Before",
         json: JSON.stringify(
@@ -43,7 +43,7 @@ const DEFAULT_GRAPH: GraphData = {
     {
       id: "2",
       type: "json",
-      position: { x: 460, y: 100 },
+      position: { x: 620, y: 150 },
       data: {
         label: "After",
         json: JSON.stringify(

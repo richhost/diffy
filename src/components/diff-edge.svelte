@@ -34,17 +34,14 @@
 
   const sourceNode = $derived(graphStore.nodes.find((n) => n.id === source));
   const targetNode = $derived(graphStore.nodes.find((n) => n.id === target));
-
   const sourceJson = $derived(sourceNode?.data?.json ?? "{}");
   const targetJson = $derived(targetNode?.data?.json ?? "{}");
 
   const diffMeta = $derived.by(() => {
     if (!sourceNode || !targetNode) return null;
     try {
-      // Validate that both nodes have valid JSON
       JSON.parse(sourceJson);
       JSON.parse(targetJson);
-
       const oldFile = {
         name: (sourceNode.data.label || "source") + ".json",
         contents: sourceJson,
@@ -62,15 +59,13 @@
   const isValid = $derived(diffMeta !== null);
 </script>
 
-<!-- Renders the flow connection path -->
+<!-- Edge path -->
 <BaseEdge path={edgePath} {markerEnd} {markerStart} {style} />
 
-<!-- Renders the HTML diff badge over the connection center -->
+<!-- Edge label pill -->
 <EdgeLabel x={labelX} y={labelY}>
-  <div
-    class="nodrag nopan flex items-center bg-[#0b0c0e]/95 border border-white/[0.08] hover:border-neutral-500/50 rounded-full p-1 shadow-md shadow-black/80 hover:shadow-lg hover:shadow-cyan-500/5 transition-all duration-300 ease-out"
-  >
-    <!-- Diff Viewer Button -->
+  <div class="pill nodrag nopan flex items-center bg-white rounded-full">
+    <!-- Compare button -->
     <button
       onclick={() => {
         if (sourceNode && targetNode && isValid) {
@@ -85,24 +80,46 @@
         }
       }}
       disabled={!isValid}
-      class="group px-2.5 py-1 text-neutral-300 hover:text-white disabled:opacity-40 disabled:hover:text-neutral-300 text-[10px] font-semibold transition-all cursor-pointer disabled:cursor-not-allowed flex items-center gap-1"
+      class="compare-btn px-3.5 py-2 text-[11px] font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 transition-opacity duration-150"
+      style="color: {isValid ? '#0071e3' : '#aeaeb2'};"
     >
-      <span class="group-hover:text-cyan-400">Diff</span>
-      {#if !isValid}
-        <span class="text-red-400/80 font-normal">invalid JSON</span>
-      {/if}
+      {isValid ? "Compare" : "Invalid JSON"}
     </button>
 
     <!-- Divider -->
-    <div class="w-[1px] h-3 bg-white/[0.08] mx-0.5"></div>
+    <div class="w-px h-3 bg-black/8 flex-none"></div>
 
-    <!-- Delete Edge Button -->
+    <!-- Delete button — icon color only, no background -->
     <button
       onclick={() => graphStore.deleteEdge(id)}
-      class="w-5 h-5 grid place-items-center text-neutral-400 hover:text-red-400 hover:bg-red-950/30 rounded-full transition-all cursor-pointer"
+      class="delete-btn w-9 h-9 grid place-items-center cursor-pointer transition-colors duration-150"
       aria-label="Delete Edge"
     >
-      <Trash class="size-3" />
+      <Trash class="size-3 text-[#c7c7cc]" />
     </button>
   </div>
 </EdgeLabel>
+
+<style>
+  /* Strip XYFlow's default EdgeLabel background entirely */
+  :global(.svelte-flow__edge-label) {
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  .pill {
+    box-shadow:
+      0 2px 10px rgba(0, 0, 0, 0.09),
+      0 0 0 0.5px rgba(0, 0, 0, 0.07);
+  }
+
+  /* Compare: hover slightly darkens the text, no background */
+  .compare-btn:hover:not(:disabled) {
+    color: #0064cc !important;
+  }
+
+  /* Delete: only the icon color changes, no background at all */
+  .delete-btn:hover :global(svg) {
+    color: #ff3b30 !important;
+  }
+</style>
