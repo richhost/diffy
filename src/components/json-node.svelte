@@ -16,28 +16,28 @@
 <div
   tabindex="0"
   role="button"
-  class="node-card flex flex-col w-64 rounded-xl bg-white group outline-none transition-shadow duration-200"
+  class="node-card flex flex-col w-64 group outline-none transition-shadow duration-200"
 >
   <Handle type="target" position={Position.Left} />
   <Handle type="source" position={Position.Right} />
 
-  <div class="px-4 py-3 flex items-center justify-between min-h-11 rounded-t-xl">
-    <span class="text-[13px] font-semibold text-[#1d1d1f] tracking-[-0.01em] select-none">
+  <div class="node-header px-4 py-1.5 flex items-center justify-between min-h-[44px]">
+    <span class="node-title text-[13px] font-semibold tracking-[-0.01em] select-none">
       {data.label}
     </span>
     <div
-      class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto"
+      class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto"
     >
       <button
         onclick={() => editorStore.openEditor(id, data.label, data.json)}
-        class="w-6 h-6 grid place-items-center rounded-md text-[#8e8e93] hover:text-[#1d1d1f] hover:bg-black/5 transition-all duration-100 cursor-pointer"
+        class="action-btn edit-btn grid place-items-center cursor-pointer"
         aria-label="Edit JSON"
       >
         <Code class="size-3.5" />
       </button>
       <button
         onclick={() => graphStore.deleteNode(id)}
-        class="w-6 h-6 grid place-items-center rounded-md text-[#8e8e93] hover:text-[#ff3b30] hover:bg-black/5 transition-all duration-100 cursor-pointer"
+        class="action-btn delete-btn grid place-items-center cursor-pointer"
         aria-label="Delete Node"
       >
         <Trash class="size-3.5" />
@@ -45,26 +45,70 @@
     </div>
   </div>
 
-  <!-- Hairline divider -->
-  <div class="h-px bg-black/5"></div>
-
-  <div class="rounded-b-xl overflow-hidden">
+  <div class="node-body overflow-hidden">
     <JsonViewer code={data.json} />
   </div>
 </div>
 
 <style>
   .node-card {
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    border: 0.5px solid var(--color-border);
     box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.07),
-      0 1px 2px rgba(0, 0, 0, 0.04),
-      0 0 0 0.5px rgba(0, 0, 0, 0.06);
+      0 1px 3px var(--color-shadow),
+      0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: border-color 0.22s ease-out, box-shadow 0.22s ease-out;
   }
 
   .node-card:hover {
+    border-color: var(--color-primary);
     box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.08),
+      0 4px 16px var(--color-primary-light),
       0 1px 3px rgba(0, 0, 0, 0.05),
-      0 0 0 0.5px rgba(0, 0, 0, 0.07);
+      0 0 0 0.5px var(--color-primary);
+  }
+
+  .node-header {
+    border-top-left-radius: var(--radius-md);
+    border-top-right-radius: var(--radius-md);
+    border-bottom: 0.5px solid var(--color-border);
+  }
+
+  .node-title {
+    color: var(--color-text-primary);
+  }
+
+  .node-body {
+    border-bottom-left-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
+  }
+
+  .action-btn {
+    width: 28px;
+    height: 28px;
+    position: relative;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-tertiary);
+    transition: all 0.12s ease;
+    border: none;
+    background: transparent;
+  }
+
+  /* Expand touch target to 44px+ boundary without visual changes */
+  .action-btn::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+  }
+
+  .edit-btn:hover {
+    color: var(--color-primary);
+    background-color: var(--color-primary-light);
+  }
+
+  .delete-btn:hover {
+    color: var(--color-danger);
+    background-color: var(--color-danger-bg);
   }
 </style>

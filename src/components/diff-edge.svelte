@@ -64,7 +64,7 @@
 
 <!-- Edge label pill -->
 <EdgeLabel x={labelX} y={labelY}>
-  <div class="pill nodrag nopan flex items-center bg-white rounded-full">
+  <div class="pill nodrag nopan flex items-center bg-[var(--color-surface)] rounded-full">
     <!-- Compare button -->
     <button
       onclick={() => {
@@ -80,14 +80,14 @@
         }
       }}
       disabled={!isValid}
-      class="compare-btn px-3.5 py-2 text-[11px] font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 transition-opacity duration-150"
-      style="color: {isValid ? '#0071e3' : '#aeaeb2'};"
+      class="compare-btn px-3.5 py-2 text-[11px] font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 transition-all duration-150"
+      style="color: {isValid ? 'var(--color-primary)' : 'var(--color-text-quaternary)'};"
     >
       {isValid ? "Compare" : "Invalid JSON"}
     </button>
 
     <!-- Divider -->
-    <div class="w-px h-3 bg-black/8 flex-none"></div>
+    <div class="w-px h-3 bg-[var(--color-border)] flex-none"></div>
 
     <!-- Delete button — icon color only, no background -->
     <button
@@ -95,7 +95,7 @@
       class="delete-btn w-9 h-9 grid place-items-center cursor-pointer transition-colors duration-150"
       aria-label="Delete Edge"
     >
-      <Trash class="size-3 text-[#c7c7cc]" />
+      <Trash class="size-3" />
     </button>
   </div>
 </EdgeLabel>
@@ -109,17 +109,23 @@
 
   .pill {
     box-shadow:
-      0 2px 10px rgba(0, 0, 0, 0.09),
-      0 0 0 0.5px rgba(0, 0, 0, 0.07);
+      0 2px 10px var(--color-shadow),
+      0 0 0 0.5px var(--color-border);
   }
 
-  /* Compare: hover slightly darkens the text, no background */
+  /* Compare: hover slightly darkens the text and adds a breathing glow */
   .compare-btn:hover:not(:disabled) {
-    color: #0064cc !important;
+    color: var(--color-primary-hover) !important;
+    text-shadow: 0 0 4px var(--color-primary-light);
+  }
+
+  .delete-btn :global(svg) {
+    color: var(--color-text-tertiary);
+    transition: color 0.12s ease;
   }
 
   /* Delete: only the icon color changes, no background at all */
   .delete-btn:hover :global(svg) {
-    color: #ff3b30 !important;
+    color: var(--color-danger) !important;
   }
 </style>

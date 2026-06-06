@@ -30,13 +30,10 @@
   let diffStyle = $state<"split" | "unified">("split");
 
   const themeOverrides = `
-    color-scheme: light;
-    --diffs-light-bg: #ffffff;
-    --diffs-light: #1d1d1f;
-    --diffs-fg-number-override: #aeaeb2;
-    --diffs-bg-separator-override: #f5f5f7;
-    --diffs-bg-context-override: #fafafa;
-    --diffs-bg-context-gutter-override: #f5f5f7;
+    :host {
+      --diffs-font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+      --diffs-header-font-family: "Geist Sans", -apple-system, sans-serif;
+    }
   `;
 
   $effect(() => {
@@ -127,18 +124,18 @@
       class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
     >
       <Dialog.Content
-        class="w-full max-w-5xl bg-white rounded-2xl overflow-hidden flex flex-col h-[82vh] text-[#1d1d1f] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200"
-        style="box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.08);"
+        class="w-full max-w-5xl bg-[var(--color-surface)] rounded-[var(--radius-lg)] overflow-hidden flex flex-col h-[82vh] text-[var(--color-text-primary)] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200"
+        style="box-shadow: 0 20px 60px var(--color-shadow), 0 4px 16px rgba(0,0,0,0.06), 0 0 0 0.5px var(--color-border);"
       >
         <!-- Header -->
         <div class="px-6 pt-5 pb-4 flex justify-between items-start flex-none">
           <div class="flex flex-col gap-0.5">
             <Dialog.Title
-              class="text-[15px] font-semibold text-[#1d1d1f] tracking-tight"
+              class="text-[15px] font-semibold text-[var(--color-text-primary)] tracking-tight"
             >
               Compare
             </Dialog.Title>
-            <div class="text-[11px] text-[#aeaeb2] font-mono">
+            <div class="text-[11px] text-[var(--color-text-quaternary)] font-mono">
               {diffStore.sourceLabel || "source"} → {diffStore.targetLabel ||
                 "target"}
             </div>
@@ -147,23 +144,23 @@
           <div class="flex items-center gap-3">
             <!-- Layout toggle -->
             <div
-              class="flex items-center bg-[#f5f5f7] rounded-lg p-0.5 gap-0.5"
+              class="flex items-center bg-[var(--color-neutral-bg)] rounded-[var(--radius-md)] p-0.5 gap-0.5"
             >
               <button
                 onclick={() => (diffStyle = "split")}
-                class="px-3 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer {diffStyle ===
+                class="px-3 py-1 rounded-[var(--radius-sm)] text-[11px] font-medium transition-all cursor-pointer {diffStyle ===
                 'split'
-                  ? 'bg-white text-[#1d1d1f] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
-                  : 'text-[#6e6e73] hover:text-[#1d1d1f]'}"
+                  ? 'bg-[var(--color-surface)] text-[var(--color-text-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}"
               >
                 Side by side
               </button>
               <button
                 onclick={() => (diffStyle = "unified")}
-                class="px-3 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer {diffStyle ===
+                class="px-3 py-1 rounded-sm text-[11px] font-medium transition-all cursor-pointer {diffStyle ===
                 'unified'
-                  ? 'bg-white text-[#1d1d1f] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
-                  : 'text-[#6e6e73] hover:text-[#1d1d1f]'}"
+                  ? 'bg-(--color-surface) text-(--color-text-primary) shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
+                  : 'text-(--color-text-secondary) hover:text-(--color-text-primary)'}"
               >
                 Unified
               </button>
@@ -171,7 +168,7 @@
 
             <Dialog.CloseTrigger
               onclick={handleClose}
-              class="w-7 h-7 grid place-items-center rounded-full text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/6 transition-all cursor-pointer"
+              class="w-7 h-7 grid place-items-center rounded-full text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-neutral-bg) transition-all cursor-pointer"
               aria-label="Close"
             >
               <X class="size-4" />
@@ -180,10 +177,10 @@
         </div>
 
         <!-- Divider -->
-        <div class="h-px bg-black/6 flex-none"></div>
+        <div class="h-px bg-(--color-border) flex-none"></div>
 
         <!-- Diff viewer body -->
-        <div class="flex-1 overflow-hidden min-h-0 bg-white">
+        <div class="flex-1 overflow-hidden min-h-0 bg-(--color-surface)">
           <div
             bind:this={diffContainer}
             class="h-full overflow-auto font-mono text-xs"

@@ -44,7 +44,7 @@
             background: "transparent !important",
             fontSize: "13px !important",
             fontFamily:
-              "'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace",
+              "var(--font-mono)",
           },
           ".cm-scroller": { overflow: "auto", flex: "1", minHeight: "0" },
           ".cm-gutters": {

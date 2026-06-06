@@ -112,39 +112,39 @@
       <Controls />
 
       <!-- Toolbar pill -->
-      <Panel position="top-left" class="mt-3 ml-3">
+      <Panel position="top-left" class="mt-4 ml-4">
         <div
-          class="flex items-center bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.08),0_0_0_0.5px_rgba(0,0,0,0.06)] overflow-hidden"
+          class="flex items-center bg-[var(--color-surface)] rounded-[var(--radius-md)] shadow-[0_2px_8px_var(--color-shadow),0_0_0_0.5px_var(--color-border)] overflow-hidden"
         >
           <button
             onclick={handleAddNode}
-            class="flex items-center gap-1.5 px-3.5 py-2 text-[#1d1d1f] hover:bg-black/4 transition-colors duration-150 cursor-pointer text-[11px] font-medium tracking-tight"
+            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
           >
-            <Plus class="size-3.5 text-[#0071e3]" />
+            <Plus class="size-3.5 text-[var(--color-primary)]" />
             Add Node
           </button>
-          <div class="w-px h-4 bg-black/8"></div>
+          <div class="w-px h-4 bg-[var(--color-border)]"></div>
           <button
             onclick={handleImport}
-            class="flex items-center gap-1.5 px-3.5 py-2 text-[#1d1d1f] hover:bg-black/4 transition-colors duration-150 cursor-pointer text-[11px] font-medium tracking-tight"
+            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
           >
-            <Upload class="size-3.5 text-[#6e6e73]" />
+            <Upload class="size-3.5 text-[var(--color-text-secondary)]" />
             Import
           </button>
-          <div class="w-px h-4 bg-black/8"></div>
+          <div class="w-px h-4 bg-[var(--color-border)]"></div>
           <button
             onclick={handleExport}
-            class="flex items-center gap-1.5 px-3.5 py-2 text-[#1d1d1f] hover:bg-black/4 transition-colors duration-150 cursor-pointer text-[11px] font-medium tracking-tight"
+            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
           >
-            <Download class="size-3.5 text-[#6e6e73]" />
+            <Download class="size-3.5 text-[var(--color-text-secondary)]" />
             Export
           </button>
-          <div class="w-px h-4 bg-black/8"></div>
+          <div class="w-px h-4 bg-[var(--color-border)]"></div>
           <button
             onclick={() => helpStore.openHelp()}
-            class="flex items-center gap-1.5 px-3.5 py-2 text-[#1d1d1f] hover:bg-black/4 transition-colors duration-150 cursor-pointer text-[11px] font-medium tracking-tight"
+            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
           >
-            <HelpCircle class="size-3.5 text-[#6e6e73]" />
+            <HelpCircle class="size-3.5 text-[var(--color-text-secondary)]" />
             Help
           </button>
         </div>
@@ -154,11 +154,11 @@
         <div
           class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-500"
         >
-          <p class="text-[13px] text-[#6e6e73] text-center leading-relaxed">
-            Click <span class="text-[#1d1d1f] font-medium">Add Node</span>
+          <p class="text-[13px] text-[var(--color-text-secondary)] text-center leading-relaxed">
+            Click <span class="text-[var(--color-text-primary)] font-medium">Add Node</span>
             to get started.<br />
             Connect two nodes to compare a
-            <span class="text-[#1d1d1f] font-medium">JSON diff</span>.
+            <span class="text-[var(--color-text-primary)] font-medium">JSON diff</span>.
           </p>
         </div>
       {/if}

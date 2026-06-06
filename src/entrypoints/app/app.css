@@ -6,22 +6,49 @@
 @import "@fontsource/geist-sans/600.css";
 @import "@fontsource-variable/jetbrains-mono/wght.css";
 
-:root {
-  --background-color: transparent;
+@theme {
   --font-sans: "Geist Sans", -apple-system, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
 }
 
+:root {
+  --background-color: transparent;
+
+  /* Clean Design System Tokens */
+  --color-primary: oklch(63.3% 0.224 263.6); /* Brand Accent Blue */
+  --color-primary-hover: oklch(63.36% 0.245 264.4); /* Hover state */
+  --color-primary-light: oklch(63.3% 0.224 263.6 / 0.15); /* Translucent accent */
+  --color-neutral-bg: oklch(97% 0.003 273.6); /* Canvas Background */
+  --color-surface: oklch(100% 0 0); /* Card/Panel Surface */
+  --color-text-primary: oklch(12.33% 0.005 278.6); /* Primary Text */
+  --color-text-secondary: oklch(46.5% 0.015 285); /* Secondary Text */
+  --color-text-tertiary: oklch(60.14% 0.016 268.4); /* Tertiary Text */
+  --color-text-quaternary: oklch(75.2% 0.006 286); /* Quaternary Text */
+  --color-success: oklch(75.56% 0.177 141.45); /* Green for added items */
+  --color-success-bg: oklch(75.56% 0.177 141.45 / 0.08);
+  --color-danger: oklch(0.63 0.26 29.28); /* Red for removed items/actions */
+  --color-danger-bg: oklch(0.63 0.26 29.28 / 0.08);
+  --color-border: oklch(0% 0 0 / 0.06); /* Subtle hairline dividers */
+  --color-shadow: oklch(0% 0 0 / 0.08);
+
+  /* Radius Tokens */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
 body {
   font-family: var(--font-sans);
-  @apply bg-[#f5f5f7] antialiased text-[#1d1d1f];
+  background-color: var(--color-neutral-bg);
+  color: var(--color-text-primary);
+  @apply antialiased;
 }
 
 .svelte-flow .svelte-flow__node.selected > *,
 .svelte-flow .svelte-flow__node:focus > *,
 .svelte-flow .svelte-flow__node:focus-visible > * {
   box-shadow:
-    0 2px 12px rgba(0, 0, 0, 0.1),
+    0 2px 12px var(--color-shadow),
     0 1px 3px rgba(0, 0, 0, 0.06),
     0 0 0 0.5px rgba(0, 0, 0, 0.08) !important;
   outline: none !important;
@@ -35,20 +62,20 @@ body {
 .svelte-flow .svelte-flow__handle {
   width: 16px !important;
   height: 16px !important;
-  background: #ffffff !important;
+  background: var(--color-surface) !important;
   border: 1.5px solid rgba(0, 0, 0, 0.15) !important;
   border-radius: 50% !important;
-  box-shadow: inset 0 0 0 4px #f5f5f7 !important;
+  box-shadow: inset 0 0 0 4px var(--color-neutral-bg) !important;
   transition:
     box-shadow 0.15s ease,
     border-color 0.15s ease !important;
 }
 
 .svelte-flow .svelte-flow__handle:hover {
-  border-color: #0071e3 !important;
+  border-color: var(--color-primary) !important;
   box-shadow:
-    inset 0 0 0 1px #f5f5f7,
-    0 0 0 3px rgba(0, 113, 227, 0.15) !important;
+    inset 0 0 0 1px var(--color-neutral-bg),
+    0 0 0 3px var(--color-primary-light) !important;
 }
 
 .svelte-flow .svelte-flow__edge-path {
@@ -68,25 +95,25 @@ body {
 
 .svelte-flow .svelte-flow__controls {
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 0 0 0.5px rgba(0, 0, 0, 0.06) !important;
-  border-radius: 10px !important;
+    0 2px 8px var(--color-shadow),
+    0 0 0 0.5px var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
   overflow: hidden !important;
   border: none !important;
 }
 
 .svelte-flow .svelte-flow__controls-button {
   border: none !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
-  background: white !important;
-  color: #6e6e73 !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text-secondary) !important;
   width: 28px !important;
   height: 28px !important;
 }
 
 .svelte-flow .svelte-flow__controls-button:hover {
-  background: rgba(0, 0, 0, 0.04) !important;
-  color: #1d1d1f !important;
+  background: var(--color-neutral-bg) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .svelte-flow .svelte-flow__controls-button:last-child {
@@ -94,11 +121,11 @@ body {
 }
 
 .svelte-flow .svelte-flow__minimap {
-  border-radius: 10px !important;
+  border-radius: var(--radius-md) !important;
   overflow: hidden !important;
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 0 0 0.5px rgba(0, 0, 0, 0.06) !important;
+    0 2px 8px var(--color-shadow),
+    0 0 0 0.5px var(--color-border) !important;
   border: none !important;
 }
 
