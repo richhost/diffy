@@ -108,7 +108,7 @@ class GraphStore {
   }
 
   setNodes(newNodes: JasonNode[]) {
-    this.nodes = newNodes;
+    this.nodes = [...newNodes];
     if (!this.loading) this.persist();
   }
 

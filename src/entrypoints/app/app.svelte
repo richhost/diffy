@@ -19,12 +19,16 @@
   import DiffEdge from "~/components/diff-edge.svelte";
   import JsonEditorDialog from "@/components/json-editor-dialog.svelte";
   import JsonDiffDialog from "@/components/json-diff-dialog.svelte";
+  import { helpStore } from "~/stores/help.svelte";
+  import HelpDialog from "@/components/help-dialog.svelte";
+  import HelpCircle from "@tabler/icons-svelte-runes/icons/help-circle";
 
   const nodeTypes = { json: JsonNode };
   const edgeTypes = { diff: DiffEdge };
 
   $effect(() => {
     graphStore.init();
+    helpStore.init();
   });
 
   const isEmpty = $derived(graphStore.nodes.length === 0);
@@ -78,6 +82,9 @@
       ),
     );
   }
+  function handleNodeDragStop() {
+    graphStore.setNodes(graphStore.nodes);
+  }
 </script>
 
 <div class="w-screen h-screen">
@@ -95,8 +102,9 @@
       {nodeTypes}
       {edgeTypes}
       onconnect={handleConnect}
+      onnodedragstop={handleNodeDragStop}
       fitView
-      fitViewOptions={{ maxZoom: 0.75, padding: 0.25 }}
+      fitViewOptions={{ maxZoom: 1.0, padding: 0.1 }}
       defaultEdgeOptions={{ type: "diff", animated: true }}
     >
       <Background gap={24} size={1} />
@@ -131,6 +139,14 @@
             <Download class="size-3.5 text-[#6e6e73]" />
             Export
           </button>
+          <div class="w-px h-4 bg-black/8"></div>
+          <button
+            onclick={() => helpStore.openHelp()}
+            class="flex items-center gap-1.5 px-3.5 py-2 text-[#1d1d1f] hover:bg-black/4 transition-colors duration-150 cursor-pointer text-[11px] font-medium tracking-tight"
+          >
+            <HelpCircle class="size-3.5 text-[#6e6e73]" />
+            Help
+          </button>
         </div>
       </Panel>
 
@@ -151,3 +167,4 @@
 </div>
 <JsonEditorDialog />
 <JsonDiffDialog />
+<HelpDialog />

@@ -13,10 +13,6 @@
   $inspect(data, id);
 </script>
 
-<!--
-  根容器不能加 overflow-hidden，否则 Handle 会被裁剪导致无法连线。
-  圆角视觉由 node-card 的 border-radius + 子元素各自处理。
--->
 <div
   tabindex="0"
   role="button"
@@ -25,8 +21,7 @@
   <Handle type="target" position={Position.Left} />
   <Handle type="source" position={Position.Right} />
 
-  <!-- Header（顶部圆角跟随父元素，无需额外设置）-->
-  <div class="px-4 py-3 flex items-center justify-between min-h-[44px] rounded-t-xl">
+  <div class="px-4 py-3 flex items-center justify-between min-h-11 rounded-t-xl">
     <span class="text-[13px] font-semibold text-[#1d1d1f] tracking-[-0.01em] select-none">
       {data.label}
     </span>
