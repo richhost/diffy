@@ -9,10 +9,6 @@
 @theme {
   --font-sans: "Geist Sans", -apple-system, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
-}
-
-:root {
-  --background-color: transparent;
 
   /* Clean Design System Tokens */
   --color-primary: oklch(63.3% 0.224 263.6); /* Brand Accent Blue */

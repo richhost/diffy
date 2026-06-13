@@ -64,7 +64,7 @@
 
 <!-- Edge label pill -->
 <EdgeLabel x={labelX} y={labelY}>
-  <div class="pill nodrag nopan flex items-center bg-[var(--color-surface)] rounded-full">
+  <div class="pill nodrag nopan flex items-center bg-surface rounded-full">
     <!-- Compare button -->
     <button
       onclick={() => {
@@ -87,7 +87,7 @@
     </button>
 
     <!-- Divider -->
-    <div class="w-px h-3 bg-[var(--color-border)] flex-none"></div>
+    <div class="w-px h-3 bg-border flex-none"></div>
 
     <!-- Delete button — icon color only, no background -->
     <button

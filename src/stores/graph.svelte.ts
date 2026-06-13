@@ -71,6 +71,11 @@ class GraphStore {
   edges = $state.raw<Edge[]>([]);
   nodeCounter = $state(DEFAULT_GRAPH.nodeCounter);
   loading = $state(true);
+  showUndoToast = $state(false);
+
+  private lastDeletedNode: JasonNode | null = null;
+  private lastDeletedEdges: Edge[] = [];
+  private toastTimer: any = null;
 
   private async loadGraph(): Promise<GraphData> {
     try {
@@ -148,9 +153,40 @@ class GraphStore {
   }
 
   deleteNode(nodeId: string) {
+    const node = this.nodes.find((n) => n.id === nodeId);
+    if (node) {
+      this.lastDeletedNode = node;
+      this.lastDeletedEdges = this.edges.filter((e) => e.source === nodeId || e.target === nodeId);
+      this.showUndoToast = true;
+      if (this.toastTimer) clearTimeout(this.toastTimer);
+      this.toastTimer = setTimeout(() => {
+        this.showUndoToast = false;
+        this.lastDeletedNode = null;
+        this.lastDeletedEdges = [];
+      }, 5000);
+    }
+
     this.nodes = this.nodes.filter((n) => n.id !== nodeId);
     this.edges = this.edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
     this.persist();
+  }
+
+  restoreLastDeleted() {
+    if (!this.lastDeletedNode) return;
+    this.nodes = [...this.nodes, this.lastDeletedNode];
+    this.edges = [...this.edges, ...this.lastDeletedEdges];
+    this.lastDeletedNode = null;
+    this.lastDeletedEdges = [];
+    this.showUndoToast = false;
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.persist();
+  }
+
+  dismissUndoToast() {
+    this.showUndoToast = false;
+    this.lastDeletedNode = null;
+    this.lastDeletedEdges = [];
+    if (this.toastTimer) clearTimeout(this.toastTimer);
   }
 
   deleteEdge(edgeId: string) {

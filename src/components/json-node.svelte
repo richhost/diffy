@@ -21,7 +21,7 @@
   <Handle type="target" position={Position.Left} />
   <Handle type="source" position={Position.Right} />
 
-  <div class="node-header px-4 py-1.5 flex items-center justify-between min-h-[44px]">
+  <div class="node-header px-4 py-1.5 flex items-center justify-between min-h-11">
     <span class="node-title text-[13px] font-semibold tracking-[-0.01em] select-none">
       {data.label}
     </span>

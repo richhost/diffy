@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Loader4 from "@tabler/icons-svelte-runes/icons/loader-4";
+  import X from "@tabler/icons-svelte-runes/icons/x";
   import { graphStore } from "~/stores/graph.svelte";
   import {
     SvelteFlow,
@@ -114,37 +115,37 @@
       <!-- Toolbar pill -->
       <Panel position="top-left" class="mt-4 ml-4">
         <div
-          class="flex items-center bg-[var(--color-surface)] rounded-[var(--radius-md)] shadow-[0_2px_8px_var(--color-shadow),0_0_0_0.5px_var(--color-border)] overflow-hidden"
+          class="flex items-center bg-surface rounded-md shadow-[0_2px_8px_var(--color-shadow),0_0_0_0.5px_var(--color-border)] overflow-hidden"
         >
           <button
             onclick={handleAddNode}
-            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
+            class="flex items-center gap-1.5 px-4 py-2 text-text-primary hover:bg-neutral-bg transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
           >
-            <Plus class="size-3.5 text-[var(--color-primary)]" />
+            <Plus class="size-3.5 text-primary" />
             Add Node
           </button>
-          <div class="w-px h-4 bg-[var(--color-border)]"></div>
+          <div class="w-px h-4 bg-border"></div>
           <button
             onclick={handleImport}
-            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
+            class="flex items-center gap-1.5 px-4 py-2 text-text-primary hover:bg-neutral-bg transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
           >
-            <Upload class="size-3.5 text-[var(--color-text-secondary)]" />
+            <Upload class="size-3.5 text-text-secondary" />
             Import
           </button>
-          <div class="w-px h-4 bg-[var(--color-border)]"></div>
+          <div class="w-px h-4 bg-border"></div>
           <button
             onclick={handleExport}
-            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
+            class="flex items-center gap-1.5 px-4 py-2 text-text-primary hover:bg-neutral-bg transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
           >
-            <Download class="size-3.5 text-[var(--color-text-secondary)]" />
+            <Download class="size-3.5 text-text-secondary" />
             Export
           </button>
-          <div class="w-px h-4 bg-[var(--color-border)]"></div>
+          <div class="w-px h-4 bg-border"></div>
           <button
             onclick={() => helpStore.openHelp()}
-            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
+            class="flex items-center gap-1.5 px-4 py-2 text-text-primary hover:bg-neutral-bg transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
           >
-            <HelpCircle class="size-3.5 text-[var(--color-text-secondary)]" />
+            <HelpCircle class="size-3.5 text-text-secondary" />
             Help
           </button>
         </div>
@@ -154,11 +155,11 @@
         <div
           class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-500"
         >
-          <p class="text-[13px] text-[var(--color-text-secondary)] text-center leading-relaxed">
-            Click <span class="text-[var(--color-text-primary)] font-medium">Add Node</span>
+          <p class="text-[13px] text-text-secondary text-center leading-relaxed">
+            Click <span class="text-text-primary font-medium">Add Node</span>
             to get started.<br />
             Connect two nodes to compare a
-            <span class="text-[var(--color-text-primary)] font-medium">JSON diff</span>.
+            <span class="text-text-primary font-medium">JSON diff</span>.
           </p>
         </div>
       {/if}
@@ -168,3 +169,25 @@
 <JsonEditorDialog />
 <JsonDiffDialog />
 <HelpDialog />
+
+{#if graphStore.showUndoToast}
+  <div
+    class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 bg-text-primary text-surface rounded-md shadow-[0_4px_16px_var(--color-shadow),0_0_0_0.5px_var(--color-border)] animate-in fade-in slide-in-from-bottom-4 duration-200"
+  >
+    <span class="text-[12px] font-medium tracking-tight">Node deleted</span>
+    <div class="w-px h-3 bg-surface opacity-20"></div>
+    <button
+      onclick={() => graphStore.restoreLastDeleted()}
+      class="text-[12px] font-bold text-primary hover:underline cursor-pointer transition-colors duration-150"
+    >
+      Undo
+    </button>
+    <button
+      onclick={() => graphStore.dismissUndoToast()}
+      class="text-text-tertiary hover:text-surface ml-1 cursor-pointer transition-colors duration-150 p-0.5 rounded-full hover:bg-white/10"
+      aria-label="Dismiss"
+    >
+      <X class="size-3" />
+    </button>
+  </div>
+{/if}
