@@ -10,6 +10,7 @@
   import X from "@tabler/icons-svelte-runes/icons/x";
   import { diffStore } from "~/stores/diff.svelte";
   import { sortJSONKeys } from "~/utils/json";
+  import { i18n } from "~/stores/i18n.svelte";
 
   let shouldSortKeys = $state(false);
 
@@ -149,7 +150,7 @@
             <Dialog.Title
               class="text-[15px] font-semibold text-text-primary tracking-tight"
             >
-              Compare
+              {i18n.t("compare")}
             </Dialog.Title>
             <div class="text-[11px] text-text-quaternary font-mono">
               {diffStore.sourceLabel || "source"} → {diffStore.targetLabel ||
@@ -161,9 +162,9 @@
             <!-- Sort Keys toggle -->
             <button
               onclick={() => (shouldSortKeys = !shouldSortKeys)}
-              class="h-6.5 px-3 rounded-md text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1.5 {shouldSortKeys ? 'text-primary font-semibold border-[0.5px] border-primary bg-primary-light' : 'text-text-secondary border-[0.5px] border-transparent bg-neutral-bg hover:bg-border'}"
+              class="h-[26px] px-3 rounded-[var(--radius-md)] text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1.5 {shouldSortKeys ? 'text-primary font-semibold border-[0.5px] border-primary bg-primary-light' : 'text-text-secondary border-[0.5px] border-transparent bg-neutral-bg hover:bg-border'}"
             >
-              Sort Keys
+              {i18n.t("sortKeys")}
             </button>
 
             <!-- Layout toggle -->
@@ -172,12 +173,12 @@
             >
               <button
                 onclick={() => (diffStyle = "split")}
-                class="px-3 py-1 rounded-sm text-[11px] font-medium transition-all cursor-pointer {diffStyle ===
+                class="px-3 py-1 rounded-[var(--radius-sm)] text-[11px] font-medium transition-all cursor-pointer {diffStyle ===
                 'split'
                   ? 'bg-surface text-text-primary shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
                   : 'text-text-secondary hover:text-text-primary'}"
               >
-                Side by side
+                {i18n.t("sideBySide")}
               </button>
               <button
                 onclick={() => (diffStyle = "unified")}
@@ -186,7 +187,7 @@
                   ? 'bg-surface text-text-primary shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
                   : 'text-text-secondary hover:text-text-primary'}"
               >
-                Unified
+                {i18n.t("unified")}
               </button>
             </div>
 

@@ -1,0 +1,4 @@
+{
+  "extName": { "message": "Diffy - 可視化 JSON 差分比較" },
+  "extDesc": { "message": "可視化グラフでJSONの差分を比較します。" }
+}

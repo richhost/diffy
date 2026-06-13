@@ -7,6 +7,7 @@
   import X from "@tabler/icons-svelte-runes/icons/x";
   import Check from "@tabler/icons-svelte-runes/icons/check";
   import { sortJSONKeys } from "~/utils/json";
+  import { i18n } from "~/stores/i18n.svelte";
 
   let labelValue = $state("");
   let jsonValue = $state("");
@@ -222,7 +223,7 @@
         <!-- Header -->
         <div class="px-6 pt-5 pb-4 flex justify-between items-start">
           <Dialog.Title class="text-[15px] font-semibold text-text-primary tracking-tight">
-            Edit Node
+            {i18n.t("editNode")}
           </Dialog.Title>
           <Dialog.CloseTrigger
             onclick={handleCancel}
@@ -241,7 +242,7 @@
               for="node-label"
               class="text-[11px] font-semibold text-text-secondary tracking-tight"
             >
-              Label
+              {i18n.t("label")}
             </label>
             <input
               id="node-label"
@@ -256,16 +257,16 @@
           <div class="flex flex-col gap-1.5 flex-1 min-h-0">
             <div class="flex items-center justify-between">
               <span class="text-[11px] font-semibold text-text-secondary tracking-tight select-none">
-                JSON Content
+                {i18n.t("jsonContent")}
               </span>
               <div class="flex items-center gap-2">
                 {#if showDeepParseButton}
                   <button
                     onclick={handleDeepParse}
-                    class="px-2 py-0.5 rounded text-[11px] font-semibold text-primary hover:bg-primary-light transition-colors duration-150 cursor-pointer tracking-tight animate-in fade-in"
+                    class="px-2 py-0.5 rounded text-[11px] font-semibold text-primary hover:bg-primary-light transition-colors duration-150 cursor-pointer tracking-tight animate-in fade-in duration-200"
                     title="Deeply parse any nested stringified JSON fields recursively"
                   >
-                    Deep Parse
+                    {i18n.t("deepParse")}
                   </button>
                 {/if}
                 <button
@@ -273,7 +274,7 @@
                   class="px-2 py-0.5 rounded text-[11px] font-semibold text-primary hover:bg-primary-light transition-colors duration-150 cursor-pointer tracking-tight"
                   title="Sort JSON keys alphabetically"
                 >
-                  Sort Keys
+                  {i18n.t("sortKeys")}
                 </button>
               </div>
             </div>
@@ -292,17 +293,17 @@
         <div class="px-6 pb-5 flex justify-end gap-2">
           <button
             onclick={handleCancel}
-            class="px-4 py-2 rounded-md text-[13px] text-text-secondary hover:text-text-primary hover:bg-neutral-bg font-medium transition-all cursor-pointer"
+            class="px-4 py-2 rounded-[var(--radius-md)] text-[13px] text-text-secondary hover:text-text-primary hover:bg-neutral-bg font-medium transition-all cursor-pointer"
           >
-            Cancel
+            {i18n.t("cancel")}
           </button>
           <button
             onclick={handleSave}
-            class="flex items-center gap-1.5 px-4 py-2 rounded-md text-[13px] font-medium text-white transition-all cursor-pointer hover:opacity-90 active:scale-[0.98]"
+            class="flex items-center gap-1.5 px-4 py-2 rounded-[var(--radius-md)] text-[13px] font-medium text-white transition-all cursor-pointer hover:opacity-90 active:scale-[0.98]"
             style="background: var(--color-primary);"
           >
             <Check class="size-3.5" />
-            Save
+            {i18n.t("save")}
           </button>
         </div>
       </Dialog.Content>

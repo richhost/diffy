@@ -5,6 +5,7 @@
   import Trash from "@tabler/icons-svelte-runes/icons/trash";
   import { graphStore } from "~/stores/graph.svelte";
   import { diffStore } from "~/stores/diff.svelte";
+  import { i18n } from "~/stores/i18n.svelte";
 
   let {
     id,
@@ -83,7 +84,7 @@
       class="compare-btn px-3.5 py-2 text-[11px] font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 transition-all duration-150"
       style="color: {isValid ? 'var(--color-primary)' : 'var(--color-text-quaternary)'};"
     >
-      {isValid ? "Compare" : "Invalid JSON"}
+      {isValid ? i18n.t("compare") : i18n.t("invalidJson")}
     </button>
 
     <!-- Divider -->

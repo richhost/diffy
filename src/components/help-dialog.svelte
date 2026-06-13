@@ -5,6 +5,7 @@
   import X from "@tabler/icons-svelte-runes/icons/x";
   import ChevronLeft from "@tabler/icons-svelte-runes/icons/chevron-left";
   import ChevronRight from "@tabler/icons-svelte-runes/icons/chevron-right";
+  import { i18n } from "~/stores/i18n.svelte";
 
   let currentStep = $state(0);
   const totalSteps = 4;
@@ -56,7 +57,7 @@
         <!-- Header -->
         <div class="px-6 pt-5 pb-4 flex justify-between items-center flex-none">
           <Dialog.Title class="text-[13px] font-semibold text-text-secondary tracking-tight uppercase">
-            Guide • {currentStep + 1} of {totalSteps}
+            {i18n.t("guideTitle")} • {currentStep + 1} / {totalSteps}
           </Dialog.Title>
           <Dialog.CloseTrigger
             onclick={handleSkip}
@@ -77,7 +78,7 @@
               <div class="flex items-center gap-3 animate-in fade-in duration-300">
                 <div class="w-28 h-24 bg-surface rounded-sm border border-border shadow-sm flex flex-col overflow-hidden relative">
                   <div class="h-5 bg-neutral-bg border-b border-border px-2 flex items-center justify-between">
-                    <span class="text-[8px] font-bold text-text-primary">JSON Node</span>
+                    <span class="text-[8px] font-bold text-text-primary">{i18n.t("jsonNode")}</span>
                     <span class="w-2.5 h-2.5 rounded bg-border flex items-center justify-center">
                       <span class="w-1.5 h-1.5 rounded-full bg-primary-light"></span>
                     </span>
@@ -93,7 +94,7 @@
                   <span class="w-7 h-7 rounded-full bg-primary-light flex items-center justify-center text-primary">
                     ＋
                   </span>
-                  <span class="text-[9px] font-medium text-text-primary">Add Node</span>
+                  <span class="text-[9px] font-medium text-text-primary">{i18n.t("addNode")}</span>
                 </div>
               </div>
 
@@ -103,10 +104,10 @@
                 <!-- Source Node -->
                 <div class="w-20 h-16 bg-surface rounded-sm border border-border shadow-sm flex flex-col overflow-hidden relative">
                   <div class="h-4 bg-neutral-bg border-b border-border px-1.5 flex items-center">
-                    <span class="text-[7px] font-semibold text-text-primary">Before</span>
+                    <span class="text-[7px] font-semibold text-text-primary">{i18n.t("before")}</span>
                   </div>
                   <!-- Right Handle -->
-                  <div class="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-surface border border-border shadow-sm flex items-center justify-center">
+                  <div class="absolute right-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-surface border border-border shadow-sm flex items-center justify-center">
                     <div class="w-1 h-1 rounded-full bg-primary animate-ping"></div>
                   </div>
                 </div>
@@ -124,12 +125,12 @@
                 </svg>
 
                 <!-- Target Node -->
-                <div class="w-20 h-16 bg-surface rounded-sm border border-border shadow-sm flex flex-col overflow-hidden relative">
+                <div class="w-20 h-16 bg-surface rounded-[var(--radius-sm)] border border-border shadow-sm flex flex-col overflow-hidden relative">
                   <div class="h-4 bg-neutral-bg border-b border-border px-1.5 flex items-center">
-                    <span class="text-[7px] font-semibold text-text-primary">After</span>
+                    <span class="text-[7px] font-semibold text-text-primary">{i18n.t("after")}</span>
                   </div>
                   <!-- Left Handle -->
-                  <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-surface border border-border shadow-sm"></div>
+                  <div class="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-surface border border-border shadow-sm"></div>
                 </div>
               </div>
 
@@ -142,16 +143,16 @@
                   
                   <!-- Connection line with Compare badge -->
                   <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="w-30 h-0.5 bg-border relative flex items-center justify-center">
+                    <div class="w-[120px] h-0.5 bg-border relative flex items-center justify-center">
                       <span class="bg-primary text-surface text-[7px] font-semibold px-2 py-0.5 rounded-full shadow-md animate-bounce">
-                        Compare
+                        {i18n.t("compare")}
                       </span>
                     </div>
                   </div>
                 </div>
                 
                 <!-- Mini side-by-side diff preview -->
-                <div class="w-52 h-14 bg-surface border border-border rounded-sm shadow-sm overflow-hidden flex font-mono text-[5px] text-left">
+                <div class="w-52 h-14 bg-surface border border-border rounded-[var(--radius-sm)] shadow-sm overflow-hidden flex font-mono text-[5px] text-left">
                   <div class="flex-1 p-1 bg-danger-bg border-r border-border flex flex-col gap-0.5">
                     <span class="text-danger font-bold">- "role": "viewer"</span>
                   </div>
@@ -168,7 +169,7 @@
                   <div class="w-10 h-10 rounded-lg bg-surface border border-border shadow-sm flex items-center justify-center text-text-secondary">
                     ↑
                   </div>
-                  <span class="text-[8px] font-medium text-text-secondary">Import</span>
+                  <span class="text-[8px] font-medium text-text-secondary">{i18n.t("import")}</span>
                 </div>
                 <div class="w-16 h-20 bg-surface border border-border rounded shadow-sm flex flex-col items-center justify-center gap-1.5 relative">
                   <span class="text-[12px] font-bold text-text-primary">JSON</span>
@@ -179,7 +180,7 @@
                   <div class="w-10 h-10 rounded-lg bg-primary-light border border-primary/20 shadow-sm flex items-center justify-center text-primary font-bold">
                     ↓
                   </div>
-                  <span class="text-[8px] font-medium text-primary">Export</span>
+                  <span class="text-[8px] font-medium text-primary">{i18n.t("export")}</span>
                 </div>
               </div>
             {/if}
@@ -189,31 +190,31 @@
           <div class="flex flex-col gap-2">
             {#if currentStep === 0}
               <h2 class="text-base font-semibold text-text-primary tracking-tight">
-                Create & Edit JSON Nodes
+                {i18n.t("step0Title")}
               </h2>
               <p class="text-[13px] text-text-secondary leading-relaxed max-w-xs">
-                Click <span class="text-primary font-semibold">Add Node</span> in the toolbar to create a JSON card. Hover any node and click the <b>code icon</b> to edit its label and JSON values.
+                {i18n.t("step0Desc")}
               </p>
             {:else if currentStep === 1}
               <h2 class="text-base font-semibold text-text-primary tracking-tight">
-                Connect Nodes
+                {i18n.t("step1Title")}
               </h2>
               <p class="text-[13px] text-text-secondary leading-relaxed max-w-xs">
-                Link cards together by dragging a line from the <b>right handle</b> (source) of one card and dropping it onto the <b>left handle</b> (target) of another.
+                {i18n.t("step1Desc")}
               </p>
             {:else if currentStep === 2}
               <h2 class="text-base font-semibold text-text-primary tracking-tight">
-                Compare JSON Differences
+                {i18n.t("step2Title")}
               </h2>
               <p class="text-[13px] text-text-secondary leading-relaxed max-w-xs">
-                Once connected, a <span class="text-primary font-semibold">Compare</span> button will appear on the connection edge. Click it to open a side-by-side or unified diff comparison.
+                {i18n.t("step2Desc")}
               </p>
             {:else}
               <h2 class="text-base font-semibold text-text-primary tracking-tight">
-                Import & Export Graphs
+                {i18n.t("step3Title")}
               </h2>
               <p class="text-[13px] text-text-secondary leading-relaxed max-w-xs">
-                Save your workspace structure and JSON details to a file by clicking <b>Export</b>. You can reload your saved file anytime using <b>Import</b>.
+                {i18n.t("step3Desc")}
               </p>
             {/if}
           </div>
@@ -236,7 +237,7 @@
             onclick={handleSkip}
             class="text-[12px] font-medium text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
           >
-            Skip
+            {i18n.t("skip")}
           </button>
           
           <div class="flex items-center gap-2">
@@ -255,9 +256,9 @@
               style="background: var(--color-primary);"
             >
               {#if currentStep === totalSteps - 1}
-                Get Started
+                {i18n.t("getStarted")}
               {:else}
-                Next
+                {i18n.t("next")}
                 <ChevronRight class="size-3.5" />
               {/if}
             </button>

@@ -5,9 +5,9 @@ export default defineConfig({
   srcDir: "src",
   modules: ["@wxt-dev/module-svelte"],
   manifest: {
-    name: "Diffy",
-    description:
-      "Visual JSON diff tool. Create JSON nodes, connect them, and instantly see what changed — field by field.",
+    name: "__MSG_extName__",
+    description: "__MSG_extDesc__",
+    default_locale: "en",
     action: {},
     permissions: ["storage", "unlimitedStorage"],
   },
