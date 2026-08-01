@@ -43,15 +43,18 @@
             flexDirection: "column",
             background: "transparent !important",
             fontSize: "13px !important",
-            fontFamily:
-              "var(--font-mono)",
+            fontFamily: "var(--font-mono)",
           },
           ".cm-scroller": { overflow: "auto", flex: "1", minHeight: "0" },
           ".cm-gutters": {
-            background: "transparent !important",
-            borderRight: "1px solid rgba(0,0,0,0.08) !important",
-            color: "#aeaeb2 !important",
+            background: "var(--color-neutral-bg, #f5f5f7) !important",
+            borderRight:
+              "1px solid var(--color-border, rgba(0,0,0,0.08)) !important",
+            color: "var(--color-text-quaternary, #aeaeb2) !important",
             paddingRight: "8px",
+            position: "sticky !important",
+            left: "0 !important",
+            zIndex: "10 !important",
           },
           ".cm-activeLineGutter": { background: "transparent !important" },
           ".cm-activeLine": { background: "rgba(0,0,0,0.025) !important" },
