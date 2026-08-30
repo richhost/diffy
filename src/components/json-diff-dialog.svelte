@@ -35,7 +35,7 @@
 
   const themeOverrides = `
     :host {
-      --diffs-font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+      --diffs-font-family: "Google Sans Code Variable", ui-monospace, monospace;
       --diffs-header-font-family: "Geist Sans", -apple-system, sans-serif;
     }
   `;

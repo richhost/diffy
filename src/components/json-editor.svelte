@@ -17,6 +17,184 @@
     { tag: t.bracket, color: "#1d1d1f" },
   ]);
 
+  import {
+    search,
+    getSearchQuery,
+    setSearchQuery,
+    findNext,
+    findPrevious,
+    replaceNext,
+    replaceAll,
+    selectMatches,
+    closeSearchPanel,
+    SearchQuery,
+  } from "@codemirror/search";
+
+  function createCustomSearchPanel(view: EditorView) {
+    const query = getSearchQuery(view.state);
+
+    const dom = document.createElement("div");
+    dom.className = "cm-search";
+
+    // Row 1: Find Row
+    const row1 = document.createElement("div");
+    row1.className = "cm-search-row";
+
+    const searchInput = document.createElement("input");
+    searchInput.className = "cm-textfield cm-search-field";
+    searchInput.placeholder = "Find...";
+    searchInput.value = query.search;
+    searchInput.name = "search";
+
+    function makeBtn(html: string, onclick: () => void, title?: string, className = "cm-button cm-icon-btn") {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = className;
+      btn.innerHTML = html;
+      if (title) btn.title = title;
+      btn.onclick = (e) => {
+        e.preventDefault();
+        onclick();
+      };
+      return btn;
+    }
+
+    const prevBtn = makeBtn(
+      `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>`,
+      () => findPrevious(view),
+      "Previous match (Shift+Enter)"
+    );
+    const nextBtn = makeBtn(
+      `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`,
+      () => findNext(view),
+      "Next match (Enter)"
+    );
+    const allBtn = makeBtn("All", () => selectMatches(view), "Select all matches", "cm-button");
+
+    function makeToggleBtn(text: string, checked: boolean, title: string, onchange: (val: boolean) => void) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "cm-search-toggle-btn" + (checked ? " active" : "");
+      btn.textContent = text;
+      btn.title = title;
+      let isChecked = checked;
+      btn.onclick = (e) => {
+        e.preventDefault();
+        isChecked = !isChecked;
+        btn.classList.toggle("active", isChecked);
+        onchange(isChecked);
+      };
+      return {
+        btn,
+        setChecked(val: boolean) {
+          isChecked = val;
+          btn.classList.toggle("active", val);
+        },
+        get checked() {
+          return isChecked;
+        },
+      };
+    }
+
+    const caseToggle = makeToggleBtn("Aa", query.caseSensitive, "Match Case", () => commit());
+    const regexToggle = makeToggleBtn(".*", query.regexp, "Use Regular Expression", () => commit());
+    const wordToggle = makeToggleBtn("\\b", query.wholeWord, "Match Whole Word", () => commit());
+
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "cm-search-close-btn";
+    closeBtn.innerHTML = "×";
+    closeBtn.title = "Close (Escape)";
+    closeBtn.onclick = (e) => {
+      e.preventDefault();
+      closeSearchPanel(view);
+      view.focus();
+    };
+
+    row1.appendChild(searchInput);
+    row1.appendChild(prevBtn);
+    row1.appendChild(nextBtn);
+    row1.appendChild(allBtn);
+    row1.appendChild(caseToggle.btn);
+    row1.appendChild(regexToggle.btn);
+    row1.appendChild(wordToggle.btn);
+    row1.appendChild(closeBtn);
+
+    // Row 2: Replace Row
+    const row2 = document.createElement("div");
+    row2.className = "cm-search-row";
+
+    const replaceInput = document.createElement("input");
+    replaceInput.className = "cm-textfield cm-search-field";
+    replaceInput.placeholder = "Replace with...";
+    replaceInput.value = query.replace;
+    replaceInput.name = "replace";
+
+    const replaceBtn = makeBtn("Replace", () => replaceNext(view), "Replace current match", "cm-button");
+    const replaceAllBtn = makeBtn("Replace All", () => replaceAll(view), "Replace all matches", "cm-button");
+
+    row2.appendChild(replaceInput);
+    row2.appendChild(replaceBtn);
+    row2.appendChild(replaceAllBtn);
+
+    dom.appendChild(row1);
+    dom.appendChild(row2);
+
+    function commit() {
+      const nextQuery = new SearchQuery({
+        search: searchInput.value,
+        replace: replaceInput.value,
+        caseSensitive: caseToggle.checked,
+        regexp: regexToggle.checked,
+        wholeWord: wordToggle.checked,
+      });
+      view.dispatch({ effects: setSearchQuery.of(nextQuery) });
+    }
+
+    searchInput.oninput = commit;
+    replaceInput.oninput = commit;
+
+    dom.onkeydown = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (e.target === searchInput) {
+          if (e.shiftKey) findPrevious(view);
+          else findNext(view);
+        } else if (e.target === replaceInput) {
+          replaceNext(view);
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        closeSearchPanel(view);
+        view.focus();
+      }
+    };
+
+    return {
+      dom,
+      mount() {
+        searchInput.select();
+      },
+      update(update: any) {
+        for (const tr of update.transactions) {
+          for (const effect of tr.effects) {
+            if (effect.is(setSearchQuery)) {
+              const q = effect.value;
+              if (searchInput.value !== q.search) searchInput.value = q.search;
+              if (replaceInput.value !== q.replace) replaceInput.value = q.replace;
+              if (caseToggle.checked !== q.caseSensitive)
+                caseToggle.setChecked(q.caseSensitive);
+              if (regexToggle.checked !== q.regexp)
+                regexToggle.setChecked(q.regexp);
+              if (wordToggle.checked !== q.wholeWord)
+                wordToggle.setChecked(q.wholeWord);
+            }
+          }
+        }
+      },
+    };
+  }
+
   type Props = { value?: string; onChange?: (value: string) => void };
 
   let { value = $bindable(), onChange }: Props = $props();
@@ -32,6 +210,7 @@
       doc: untrack(() => value),
       extensions: [
         basicSetup,
+        search({ createPanel: (view) => createCustomSearchPanel(view), top: true }),
         json(),
         syntaxHighlighting(pierreLightHighlightStyle),
         EditorState.tabSize.of(2),
@@ -43,7 +222,13 @@
             flexDirection: "column",
             background: "transparent !important",
             fontSize: "13px !important",
-            fontFamily: "var(--font-mono)",
+            fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
+          },
+          ".cm-content": {
+            fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
+          },
+          ".cm-line": {
+            fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
           },
           ".cm-scroller": { overflow: "auto", flex: "1", minHeight: "0" },
           ".cm-gutters": {
@@ -51,6 +236,7 @@
             borderRight:
               "1px solid var(--color-border, rgba(0,0,0,0.08)) !important",
             color: "var(--color-text-quaternary, #aeaeb2) !important",
+            fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
             paddingRight: "8px",
             position: "sticky !important",
             left: "0 !important",
@@ -143,6 +329,7 @@
 
 <style>
   :global(.cm-editor) {
+    position: relative !important;
     flex: 1 !important;
     min-height: 0 !important;
     display: flex !important;
