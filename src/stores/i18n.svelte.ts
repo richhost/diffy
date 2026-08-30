@@ -40,6 +40,10 @@ const dictionaries = {
     jsonNode: "JSON Node",
     before: "Before",
     after: "After",
+    theme: "Theme",
+    themeSystem: "System",
+    themeLight: "Light",
+    themeDark: "Dark",
   },
   "zh-CN": {
     addNode: "添加节点",
@@ -78,6 +82,10 @@ const dictionaries = {
     jsonNode: "JSON 节点",
     before: "之前",
     after: "之后",
+    theme: "主题",
+    themeSystem: "跟随系统",
+    themeLight: "明亮模式",
+    themeDark: "暗色模式",
   },
   "zh-TW": {
     addNode: "新增節點",
@@ -116,6 +124,10 @@ const dictionaries = {
     jsonNode: "JSON 節點",
     before: "之前 (Before)",
     after: "之後 (After)",
+    theme: "主題",
+    themeSystem: "跟隨系統",
+    themeLight: "明亮模式",
+    themeDark: "暗色模式",
   },
   ja: {
     addNode: "ノードを追加",
@@ -156,6 +168,10 @@ const dictionaries = {
     jsonNode: "JSONノード",
     before: "Before",
     after: "After",
+    theme: "テーマ",
+    themeSystem: "システム",
+    themeLight: "ライト",
+    themeDark: "ダーク",
   },
 };
 

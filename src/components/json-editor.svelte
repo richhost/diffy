@@ -1,10 +1,12 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { EditorView, basicSetup } from "codemirror";
-  import { EditorState } from "@codemirror/state";
+  import { EditorState, Compartment } from "@codemirror/state";
   import { json } from "@codemirror/lang-json";
   import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
   import { tags as t } from "@lezer/highlight";
+  import { oneDark } from "@codemirror/theme-one-dark";
+  import { themeStore } from "~/stores/theme.svelte";
 
   const pierreLightHighlightStyle = HighlightStyle.define([
     { tag: t.propertyName, color: "#d73a49" },
@@ -195,25 +197,12 @@
     };
   }
 
-  type Props = { value?: string; onChange?: (value: string) => void };
+  const themeCompartment = new Compartment();
 
-  let { value = $bindable(), onChange }: Props = $props();
-
-  let container: HTMLDivElement;
-  let view = $state.raw<EditorView | undefined>(undefined);
-
-  $effect(() => {
-    if (!container) return;
-
-    view = new EditorView({
-      parent: container,
-      doc: untrack(() => value),
-      extensions: [
-        basicSetup,
-        search({ createPanel: (view) => createCustomSearchPanel(view), top: true }),
-        json(),
-        syntaxHighlighting(pierreLightHighlightStyle),
-        EditorState.tabSize.of(2),
+  function getThemeExtensions(isDark: boolean) {
+    if (isDark) {
+      return [
+        oneDark,
         EditorView.theme({
           "&": {
             flex: "1",
@@ -232,10 +221,9 @@
           },
           ".cm-scroller": { overflow: "auto", flex: "1", minHeight: "0" },
           ".cm-gutters": {
-            background: "var(--color-neutral-bg, #f5f5f7) !important",
-            borderRight:
-              "1px solid var(--color-border, rgba(0,0,0,0.08)) !important",
-            color: "var(--color-text-quaternary, #aeaeb2) !important",
+            background: "var(--color-neutral-bg) !important",
+            borderRight: "1px solid var(--color-border) !important",
+            color: "var(--color-text-quaternary) !important",
             fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
             paddingRight: "8px",
             position: "sticky !important",
@@ -243,12 +231,73 @@
             zIndex: "10 !important",
           },
           ".cm-activeLineGutter": { background: "transparent !important" },
-          ".cm-activeLine": { background: "rgba(0,0,0,0.025) !important" },
-          ".cm-cursor": { borderLeftColor: "#0071e3 !important" },
+          ".cm-activeLine": { background: "rgba(255, 255, 255, 0.035) !important" },
+          ".cm-cursor": { borderLeftColor: "var(--color-primary) !important" },
           ".cm-selectionBackground": {
-            background: "rgba(0,113,227,0.12) !important",
+            background: "var(--color-primary-light) !important",
           },
         }),
+      ];
+    }
+
+    return [
+      syntaxHighlighting(pierreLightHighlightStyle),
+      EditorView.theme({
+        "&": {
+          flex: "1",
+          minHeight: "0",
+          display: "flex",
+          flexDirection: "column",
+          background: "transparent !important",
+          fontSize: "13px !important",
+          fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
+        },
+        ".cm-content": {
+          fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
+        },
+        ".cm-line": {
+          fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
+        },
+        ".cm-scroller": { overflow: "auto", flex: "1", minHeight: "0" },
+        ".cm-gutters": {
+          background: "var(--color-neutral-bg) !important",
+          borderRight: "1px solid var(--color-border) !important",
+          color: "var(--color-text-quaternary) !important",
+          fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
+          paddingRight: "8px",
+          position: "sticky !important",
+          left: "0 !important",
+          zIndex: "10 !important",
+        },
+        ".cm-activeLineGutter": { background: "transparent !important" },
+        ".cm-activeLine": { background: "rgba(0,0,0,0.025) !important" },
+        ".cm-cursor": { borderLeftColor: "var(--color-primary) !important" },
+        ".cm-selectionBackground": {
+          background: "var(--color-primary-light) !important",
+        },
+      }),
+    ];
+  }
+
+  type Props = { value?: string; onChange?: (value: string) => void };
+
+  let { value = $bindable(), onChange }: Props = $props();
+
+  let container: HTMLDivElement;
+  let view = $state.raw<EditorView | undefined>(undefined);
+
+  $effect(() => {
+    if (!container) return;
+
+    view = new EditorView({
+      parent: container,
+      doc: untrack(() => value),
+      extensions: [
+        basicSetup,
+        search({ createPanel: (view) => createCustomSearchPanel(view), top: true }),
+        json(),
+        themeCompartment.of(getThemeExtensions(untrack(() => themeStore.isDark))),
+        EditorState.tabSize.of(2),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const next = update.state.doc.toString();
@@ -314,6 +363,15 @@
       view?.destroy();
       view = undefined;
     };
+  });
+
+  $effect(() => {
+    const isDark = themeStore.isDark;
+    if (view) {
+      view.dispatch({
+        effects: themeCompartment.reconfigure(getThemeExtensions(isDark)),
+      });
+    }
   });
 
   $effect(() => {

@@ -9,6 +9,7 @@
   } from "@pierre/diffs";
   import X from "@tabler/icons-svelte-runes/icons/x";
   import { diffStore } from "~/stores/diff.svelte";
+  import { themeStore } from "~/stores/theme.svelte";
   import { sortJSONKeys } from "~/utils/json";
   import { i18n } from "~/stores/i18n.svelte";
 
@@ -46,19 +47,27 @@
     const container = document.createElement("diffs-container");
     diffContainer.appendChild(container);
 
+    const isDark = themeStore.isDark;
+    const currentTheme = isDark ? "github-dark" : "pierre-light";
+    const currentThemeType = themeStore.resolvedTheme;
+
     const instance = new FileDiff({
       diffStyle: $state.snapshot(diffStyle),
-      theme: "pierre-light",
+      theme: currentTheme,
       unsafeCSS: themeOverrides,
-      themeType: "light",
+      themeType: currentThemeType,
     });
 
     let active = true;
 
-    async function render(currentStyle: "split" | "unified") {
+    async function render(
+      currentStyle: "split" | "unified",
+      themeName: string,
+      themeType: "light" | "dark",
+    ) {
       try {
         await getSharedHighlighter({
-          themes: ["pierre-light"],
+          themes: ["pierre-light", "github-dark"],
           langs: ["json"],
         });
         if (!active) return;
@@ -87,9 +96,9 @@
 
         instance.setOptions({
           diffStyle: currentStyle,
-          theme: "pierre-light",
+          theme: themeName,
           unsafeCSS: themeOverrides,
-          themeType: "light",
+          themeType: themeType,
         });
 
         instance.render({
@@ -110,7 +119,9 @@
       const _srcLbl = diffStore.sourceLabel;
       const _tgtLbl = diffStore.targetLabel;
       const _sort = shouldSortKeys;
-      render(currentStyle);
+      const _theme = themeStore.isDark ? "github-dark" : "pierre-light";
+      const _themeType = themeStore.resolvedTheme;
+      render(currentStyle, _theme, _themeType);
     });
 
     return () => {
@@ -134,7 +145,7 @@
   <Portal>
     <!-- Backdrop -->
     <Dialog.Backdrop
-      class="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px] animate-in fade-in duration-200"
+      class="fixed inset-0 z-40 bg-black/30 dark:bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-200"
     />
 
     <Dialog.Positioner

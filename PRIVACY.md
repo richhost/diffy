@@ -56,13 +56,13 @@ If you have any questions or suggestions about this Privacy Policy, please open 
 
 **Diffy 不会收集、传输、出售或共享您的任何个人数据、浏览记录或敏感信息。**
 
-* **纯本地存储**：您在 Diffy 中输入和处理的所有 JSON 数据、图表节点及配置均仅保存在您本地浏览器的 `chrome.storage.local` 中。
-* **无远程数据传输**：Diffy 完全在您的本地浏览器端运行，不会向任何外部服务器或第三方服务发送数据。
-* **无数据分析与统计**：我们不包含任何 Cookie、数据分析代码（Analytics）或追踪器。
+- **纯本地存储**：您在 Diffy 中输入和处理的所有 JSON 数据、图表节点及配置均仅保存在您本地浏览器的 `chrome.storage.local` 中。
+- **无远程数据传输**：Diffy 完全在您的本地浏览器端运行，不会向任何外部服务器或第三方服务发送数据。
+- **无数据分析与统计**：我们不包含任何 Cookie、数据分析代码（Analytics）或追踪器。
 
 ### 2. 权限使用说明
 
-* **`storage` / `unlimitedStorage`**：仅用于在本地保存您的 JSON 节点、连线关系及偏好设置，以便您下次打开时恢复工作区。
+- **`storage` / `unlimitedStorage`**：仅用于在本地保存您的 JSON 节点、连线关系及偏好设置，以便您下次打开时恢复工作区。
 
 ### 3. 联系方式
 

@@ -4,6 +4,7 @@
   import X from "@tabler/icons-svelte-runes/icons/x";
   import { graphStore } from "~/stores/graph.svelte";
   import { i18n } from "~/stores/i18n.svelte";
+  import { themeStore } from "~/stores/theme.svelte";
   import {
     SvelteFlow,
     Background,
@@ -17,6 +18,9 @@
   import Plus from "@tabler/icons-svelte-runes/icons/plus";
   import Download from "@tabler/icons-svelte-runes/icons/download";
   import Upload from "@tabler/icons-svelte-runes/icons/upload";
+  import Sun from "@tabler/icons-svelte-runes/icons/sun";
+  import Moon from "@tabler/icons-svelte-runes/icons/moon";
+  import DeviceDesktop from "@tabler/icons-svelte-runes/icons/device-desktop";
   import JsonNode from "~/components/json-node.svelte";
   import DiffEdge from "~/components/diff-edge.svelte";
   import JsonEditorDialog from "@/components/json-editor-dialog.svelte";
@@ -32,6 +36,7 @@
     graphStore.init();
     helpStore.init();
     i18n.init();
+    themeStore.init();
   });
 
   const isEmpty = $derived(graphStore.nodes.length === 0);
@@ -98,7 +103,7 @@
   {:else}
     <SvelteFlow
       proOptions={{ hideAttribution: true }}
-      colorMode="light"
+      colorMode={themeStore.resolvedTheme}
       bind:nodes={graphStore.nodes}
       bind:edges={graphStore.edges}
       bind:viewport
@@ -110,14 +115,18 @@
       fitViewOptions={{ maxZoom: 1.0, padding: 0.1 }}
       defaultEdgeOptions={{ type: "diff", animated: true }}
     >
-      <Background gap={24} size={1} />
+      <Background
+        gap={24}
+        size={1}
+        patternColor={themeStore.isDark ? "#27272a" : "#d4d4d8"}
+      />
       <MiniMap />
       <Controls />
 
       <!-- Toolbar pill -->
       <Panel position="top-left" class="mt-4 ml-4">
         <div
-          class="flex items-center bg-surface rounded-md shadow-[0_2px_8px_var(--color-shadow),0_0_0_0.5px_var(--color-border)] overflow-hidden"
+          class="flex items-center bg-surface rounded-md shadow-[0_2px_8px_var(--color-shadow),0_0_0_0.5px_var(--color-border)] overflow-hidden transition-colors duration-150"
         >
           <button
             onclick={handleAddNode}
@@ -151,6 +160,42 @@
             {i18n.t("help")}
           </button>
           <div class="w-px h-4 bg-[var(--color-border)]"></div>
+
+          <!-- Theme switcher -->
+          <div class="relative flex items-center pr-3">
+            <div class="pl-3 pointer-events-none flex items-center text-[var(--color-text-secondary)]">
+              {#if themeStore.mode === "dark"}
+                <Moon class="size-3.5" />
+              {:else if themeStore.mode === "light"}
+                <Sun class="size-3.5" />
+              {:else}
+                <DeviceDesktop class="size-3.5" />
+              {/if}
+            </div>
+            <select
+              value={themeStore.mode}
+              onchange={(e) => themeStore.setMode((e.target as HTMLSelectElement).value as any)}
+              class="appearance-none bg-transparent pl-2 pr-6 py-2 text-[12px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] outline-none cursor-pointer transition-colors duration-150"
+              aria-label={i18n.t("theme")}
+            >
+              <option value="system">{i18n.t("themeSystem")}</option>
+              <option value="light">{i18n.t("themeLight")}</option>
+              <option value="dark">{i18n.t("themeDark")}</option>
+            </select>
+            <svg
+              class="size-3 text-[var(--color-text-tertiary)] absolute right-2 pointer-events-none"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          </div>
+
+          <div class="w-px h-4 bg-[var(--color-border)]"></div>
+
+          <!-- Language switcher -->
           <div class="relative flex items-center pr-3">
             <select
               value={i18n.locale}
@@ -205,7 +250,7 @@
     </button>
     <button
       onclick={() => graphStore.dismissUndoToast()}
-      class="text-text-tertiary hover:text-surface ml-1 cursor-pointer transition-colors duration-150 p-0.5 rounded-full hover:bg-white/10"
+      class="text-text-tertiary hover:text-surface ml-1 cursor-pointer transition-colors duration-150 p-0.5 rounded-full hover:bg-surface/10"
       aria-label="Dismiss"
     >
       <X class="size-3" />

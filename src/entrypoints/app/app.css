@@ -10,22 +10,22 @@
   --font-sans: "Geist Sans", -apple-system, sans-serif;
   --font-mono: "Google Sans Code Variable", ui-monospace, monospace;
 
-  /* Clean Design System Tokens */
-  --color-primary: oklch(63.3% 0.224 263.6); /* Brand Accent Blue */
-  --color-primary-hover: oklch(63.36% 0.245 264.4); /* Hover state */
-  --color-primary-light: oklch(63.3% 0.224 263.6 / 0.15); /* Translucent accent */
-  --color-neutral-bg: oklch(97% 0.003 273.6); /* Canvas Background */
-  --color-surface: oklch(100% 0 0); /* Card/Panel Surface */
-  --color-text-primary: oklch(12.33% 0.005 278.6); /* Primary Text */
-  --color-text-secondary: oklch(46.5% 0.015 285); /* Secondary Text */
-  --color-text-tertiary: oklch(60.14% 0.016 268.4); /* Tertiary Text */
-  --color-text-quaternary: oklch(75.2% 0.006 286); /* Quaternary Text */
-  --color-success: oklch(75.56% 0.177 141.45); /* Green for added items */
-  --color-success-bg: oklch(75.56% 0.177 141.45 / 0.08);
-  --color-danger: oklch(0.63 0.26 29.28); /* Red for removed items/actions */
-  --color-danger-bg: oklch(0.63 0.26 29.28 / 0.08);
-  --color-border: oklch(0% 0 0 / 0.06); /* Subtle hairline dividers */
-  --color-shadow: oklch(0% 0 0 / 0.08);
+  /* Clean Design System Tokens (Mapped to CSS variables for dynamic dark/light switching) */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-neutral-bg: var(--neutral-bg);
+  --color-surface: var(--surface);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-quaternary: var(--text-quaternary);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-border: var(--border-color);
+  --color-shadow: var(--shadow-color);
 
   /* Radius Tokens */
   --radius-sm: 6px;
@@ -33,10 +33,95 @@
   --radius-lg: 16px;
 }
 
+:root {
+  color-scheme: light;
+  --primary: oklch(63.3% 0.224 263.6); /* Brand Accent Blue */
+  --primary-hover: oklch(63.36% 0.245 264.4); /* Hover state */
+  --primary-light: oklch(63.3% 0.224 263.6 / 0.15); /* Translucent accent */
+  --neutral-bg: oklch(97% 0.003 273.6); /* Canvas Background #f5f5f7 */
+  --surface: oklch(100% 0 0); /* Card/Panel Surface #ffffff */
+  --text-primary: oklch(12.33% 0.005 278.6); /* Primary Text #111827 */
+  --text-secondary: oklch(46.5% 0.015 285); /* Secondary Text */
+  --text-tertiary: oklch(60.14% 0.016 268.4); /* Tertiary Text */
+  --text-quaternary: oklch(75.2% 0.006 286); /* Quaternary Text */
+  --success: oklch(75.56% 0.177 141.45); /* Green for added items */
+  --success-bg: oklch(75.56% 0.177 141.45 / 0.08);
+  --danger: oklch(0.63 0.26 29.28); /* Red for removed items/actions */
+  --danger-bg: oklch(0.63 0.26 29.28 / 0.08);
+  --border-color: oklch(0% 0 0 / 0.06); /* Subtle hairline dividers */
+  --shadow-color: oklch(0% 0 0 / 0.08);
+
+  --scrollbar-thumb: rgba(0, 0, 0, 0.12);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --handle-border: rgba(0, 0, 0, 0.15);
+  --edge-stroke: rgba(0, 0, 0, 0.2);
+
+  /* Fallback aliases for direct var(--color-*) usage */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-neutral-bg: var(--neutral-bg);
+  --color-surface: var(--surface);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-quaternary: var(--text-quaternary);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-border: var(--border-color);
+  --color-shadow: var(--shadow-color);
+}
+
+.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --primary: oklch(68% 0.21 260); /* Vibrant Clean Accent Blue */
+  --primary-hover: oklch(74% 0.22 260);
+  --primary-light: oklch(68% 0.21 260 / 0.2);
+  --neutral-bg: oklch(14% 0.005 285); /* Clean Dark Canvas #0f1013 */
+  --surface: oklch(18.5% 0.008 285); /* Elevated Dark Surface #18191e */
+  --text-primary: oklch(96% 0.003 285); /* Crisp Light Text #f4f4f6 */
+  --text-secondary: oklch(72% 0.01 285); /* Subtle Secondary Text #a1a1aa */
+  --text-tertiary: oklch(52% 0.01 285); /* Muted Tertiary Text #71717a */
+  --text-quaternary: oklch(38% 0.008 285); /* Low-key Quaternary #52525b */
+  --success: oklch(72% 0.18 145); /* Green for added items */
+  --success-bg: oklch(72% 0.18 145 / 0.15);
+  --danger: oklch(68% 0.22 25); /* Red for removed items/actions */
+  --danger-bg: oklch(68% 0.22 25 / 0.15);
+  --border-color: oklch(100% 0 0 / 0.08); /* Subtle hairline light divider */
+  --shadow-color: oklch(0% 0 0 / 0.5);
+
+  --scrollbar-thumb: rgba(255, 255, 255, 0.14);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);
+  --handle-border: rgba(255, 255, 255, 0.22);
+  --edge-stroke: rgba(255, 255, 255, 0.25);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-neutral-bg: var(--neutral-bg);
+  --color-surface: var(--surface);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-quaternary: var(--text-quaternary);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-border: var(--border-color);
+  --color-shadow: var(--shadow-color);
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--color-neutral-bg);
   color: var(--color-text-primary);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
   @apply antialiased;
 }
 
@@ -46,7 +131,7 @@ body {
   box-shadow:
     0 2px 12px var(--color-shadow),
     0 1px 3px rgba(0, 0, 0, 0.06),
-    0 0 0 0.5px rgba(0, 0, 0, 0.08) !important;
+    0 0 0 1px var(--color-primary) !important;
   outline: none !important;
 }
 
@@ -59,7 +144,7 @@ body {
   width: 16px !important;
   height: 16px !important;
   background: var(--color-surface) !important;
-  border: 1.5px solid rgba(0, 0, 0, 0.15) !important;
+  border: 1.5px solid var(--handle-border, rgba(0, 0, 0, 0.15)) !important;
   border-radius: 50% !important;
   box-shadow: inset 0 0 0 4px var(--color-neutral-bg) !important;
   transition:
@@ -75,7 +160,7 @@ body {
 }
 
 .svelte-flow .svelte-flow__edge-path {
-  stroke: rgba(0, 0, 0, 0.2) !important;
+  stroke: var(--edge-stroke, rgba(0, 0, 0, 0.2)) !important;
   stroke-width: 1.5px !important;
 }
 
@@ -105,6 +190,9 @@ body {
   color: var(--color-text-secondary) !important;
   width: 28px !important;
   height: 28px !important;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .svelte-flow .svelte-flow__controls-button:hover {
@@ -119,6 +207,7 @@ body {
 .svelte-flow .svelte-flow__minimap {
   border-radius: var(--radius-md) !important;
   overflow: hidden !important;
+  background: var(--color-surface) !important;
   box-shadow:
     0 2px 8px var(--color-shadow),
     0 0 0 0.5px var(--color-border) !important;
@@ -127,7 +216,7 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+  scrollbar-color: var(--scrollbar-thumb, rgba(0, 0, 0, 0.12)) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -140,13 +229,13 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
+  background: var(--scrollbar-thumb, rgba(0, 0, 0, 0.12));
   border-radius: 9999px;
   transition: background-color 0.15s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--scrollbar-thumb-hover, rgba(0, 0, 0, 0.25));
 }
 
 /* ==========================================================================
@@ -168,12 +257,12 @@ body {
   order: -1 !important; /* Place directly above cm-scroller */
   z-index: 10 !important;
   width: 100% !important;
-  background: var(--color-surface, #ffffff) !important;
-  border-bottom: 1px solid var(--color-border, rgba(0, 0, 0, 0.08)) !important;
+  background: var(--color-surface) !important;
+  border-bottom: 1px solid var(--color-border) !important;
 }
 
 .cm-panel.cm-search {
-  background: var(--color-surface, #ffffff) !important;
+  background: var(--color-surface) !important;
   border: none !important;
   box-shadow: none !important;
   border-radius: 0 !important;
@@ -215,8 +304,8 @@ body {
 }
 
 .cm-search .cm-textfield {
-  background: var(--color-neutral-bg, #f5f5f7) !important;
-  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.08)) !important;
+  background: var(--color-neutral-bg) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: 6px !important;
   padding: 0 8px !important;
   font-family: var(--font-mono, monospace) !important;
@@ -230,19 +319,19 @@ body {
 }
 
 .cm-search .cm-textfield:focus {
-  background: #ffffff !important;
-  border-color: var(--color-primary, #0071e3) !important;
-  box-shadow: 0 0 0 2px var(--color-primary-light, rgba(0, 113, 227, 0.15)) !important;
+  background: var(--color-surface) !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 2px var(--color-primary-light) !important;
 }
 
 .cm-search .cm-button {
-  background: var(--color-neutral-bg, #f5f5f7) !important;
-  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.06)) !important;
+  background: var(--color-neutral-bg) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: 6px !important;
   padding: 0 7px !important;
   font-size: 11px !important;
   font-weight: 500 !important;
-  color: var(--color-text-secondary, #48484a) !important;
+  color: var(--color-text-secondary) !important;
   cursor: pointer !important;
   user-select: none !important;
   transition: all 0.12s ease !important;
@@ -255,7 +344,7 @@ body {
 }
 
 .cm-search .cm-button:hover {
-  background: rgba(0, 0, 0, 0.06) !important;
+  background: var(--color-border) !important;
   color: var(--color-text-primary) !important;
 }
 
@@ -270,8 +359,8 @@ body {
 }
 
 .cm-search-toggle-btn {
-  background: var(--color-neutral-bg, #f5f5f7) !important;
-  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.06)) !important;
+  background: var(--color-neutral-bg) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: 6px !important;
   width: 26px !important;
   min-width: 26px !important;
@@ -280,7 +369,7 @@ body {
   font-family: var(--font-mono, monospace) !important;
   font-size: 11px !important;
   font-weight: 600 !important;
-  color: var(--color-text-tertiary, #8e8e93) !important;
+  color: var(--color-text-tertiary) !important;
   cursor: pointer !important;
   user-select: none !important;
   display: inline-flex !important;
@@ -292,14 +381,14 @@ body {
 }
 
 .cm-search-toggle-btn:hover {
-  background: rgba(0, 0, 0, 0.06) !important;
+  background: var(--color-border) !important;
   color: var(--color-text-primary) !important;
 }
 
 .cm-search-toggle-btn.active {
-  background: var(--color-primary-light, rgba(0, 113, 227, 0.14)) !important;
-  border-color: rgba(0, 113, 227, 0.3) !important;
-  color: var(--color-primary, #0071e3) !important;
+  background: var(--color-primary-light) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
 }
 
 .cm-search-toggle-btn:active {
@@ -308,14 +397,14 @@ body {
 
 .cm-search-close-btn {
   margin-left: auto !important;
-  background: var(--color-neutral-bg, #f5f5f7) !important;
-  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.08)) !important;
+  background: var(--color-neutral-bg) !important;
+  border: 1px solid var(--color-border) !important;
   width: 24px !important;
   height: 24px !important;
   min-width: 24px !important;
   border-radius: 6px !important;
   padding: 0 !important;
-  color: var(--color-text-secondary, #636366) !important;
+  color: var(--color-text-secondary) !important;
   font-size: 14px !important;
   line-height: 1 !important;
   font-weight: 400 !important;
@@ -331,9 +420,9 @@ body {
 }
 
 .cm-search-close-btn:hover {
-  background: var(--color-danger-bg, rgba(239, 68, 68, 0.1)) !important;
-  border-color: rgba(239, 68, 68, 0.2) !important;
-  color: var(--color-danger, #ef4444) !important;
+  background: var(--color-danger-bg) !important;
+  border-color: var(--color-danger) !important;
+  color: var(--color-danger) !important;
 }
 
 .cm-search-close-btn:active {
@@ -347,13 +436,13 @@ body {
   gap: 4px !important;
   font-size: 11px !important;
   font-weight: 500 !important;
-  color: var(--color-text-secondary, #636366) !important;
+  color: var(--color-text-secondary) !important;
   cursor: pointer !important;
   user-select: none !important;
   padding: 0 6px !important;
   border-radius: 6px !important;
-  background: var(--color-neutral-bg, #f5f5f7) !important;
-  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.06)) !important;
+  background: var(--color-neutral-bg) !important;
+  border: 1px solid var(--color-border) !important;
   height: 24px !important;
   box-sizing: border-box !important;
   transition: all 0.12s ease !important;
@@ -361,18 +450,18 @@ body {
 }
 
 .cm-search label:hover {
-  background: rgba(0, 0, 0, 0.06) !important;
+  background: var(--color-border) !important;
   color: var(--color-text-primary) !important;
 }
 
 .cm-search label:has(input:checked) {
-  background: var(--color-primary-light, rgba(0, 113, 227, 0.12)) !important;
-  border-color: rgba(0, 113, 227, 0.25) !important;
-  color: var(--color-primary, #0071e3) !important;
+  background: var(--color-primary-light) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
 }
 
 .cm-search label input[type="checkbox"] {
-  accent-color: var(--color-primary, #0071e3) !important;
+  accent-color: var(--color-primary) !important;
   width: 12px !important;
   height: 12px !important;
   margin: 0 !important;

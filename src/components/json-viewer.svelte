@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getSharedHighlighter } from "@pierre/diffs";
   import type { ThemedToken } from "@pierre/diffs";
+  import { themeStore } from "~/stores/theme.svelte";
 
   interface Props {
     code: string;
@@ -11,10 +12,14 @@
 
   let {
     code,
-    theme = "pierre-light",
+    theme,
     lineHeight = 18,
     maxLines = 8,
   }: Props = $props();
+
+  const activeTheme = $derived(
+    theme ?? (themeStore.isDark ? "github-dark" : "pierre-light"),
+  );
 
   type TokenLine = ThemedToken[];
 
@@ -31,7 +36,7 @@
     }
 
     const highlighter = await getSharedHighlighter({
-      themes: [t, "pierre-light"],
+      themes: [t, "pierre-light", "github-dark"],
       langs: ["json"],
     });
     const result = highlighter.codeToTokens(c, { lang: "json", theme: t });
@@ -41,13 +46,13 @@
     };
   }
 
-  const highlightPromise = $derived(highlight(code, theme));
+  const highlightPromise = $derived(highlight(code, activeTheme));
   const compactHeight = $derived(maxLines * lineHeight);
 </script>
 
 <div
   style:height="{compactHeight}px"
-  class="relative overflow-hidden font-mono text-[11px] px-3.5 py-2.5 bg-[#f5f5f7]"
+  class="relative overflow-hidden font-mono text-[11px] px-3.5 py-2.5 bg-neutral-bg transition-colors duration-150"
 >
   {#await highlightPromise then result}
     {@const visibleLines = result.tokens.slice(0, maxLines)}
@@ -67,7 +72,7 @@
       {#if isTruncated}
         <div
           class="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
-          style="background: linear-gradient(to bottom, transparent, #f5f5f7);"
+          style="background: linear-gradient(to bottom, transparent, var(--color-neutral-bg));"
         ></div>
       {/if}
     </div>

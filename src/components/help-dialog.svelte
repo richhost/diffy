@@ -44,7 +44,7 @@
   <Portal>
     <!-- Backdrop -->
     <Dialog.Backdrop
-      class="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px] animate-in fade-in duration-200"
+      class="fixed inset-0 z-40 bg-black/30 dark:bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-200"
     />
 
     <Dialog.Positioner
