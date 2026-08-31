@@ -8,12 +8,15 @@
     wrapCoreCSS,
   } from "@pierre/diffs";
   import X from "@tabler/icons-svelte-runes/icons/x";
+  import Maximize from "@tabler/icons-svelte-runes/icons/maximize";
+  import Minimize from "@tabler/icons-svelte-runes/icons/minimize";
   import { diffStore } from "~/stores/diff.svelte";
   import { themeStore } from "~/stores/theme.svelte";
   import { sortJSONKeys } from "~/utils/json";
   import { i18n } from "~/stores/i18n.svelte";
 
   let shouldSortKeys = $state(false);
+  let isMaximized = $state(false);
 
   // Register diffs-container custom element
   if (typeof window !== "undefined" && !customElements.get("diffs-container")) {
@@ -152,11 +155,17 @@
       class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
     >
       <Dialog.Content
-        class="w-full max-w-5xl bg-surface rounded-(--radius-lg) overflow-hidden flex flex-col h-[82vh] text-text-primary animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200"
+        class="w-full bg-surface rounded-(--radius-lg) overflow-hidden flex flex-col text-text-primary transition-all duration-200 ease-out animate-in fade-in zoom-in-95 slide-in-from-bottom-2 {isMaximized
+          ? 'max-w-[94vw] h-[92vh]'
+          : 'max-w-5xl h-[82vh]'}"
         style="box-shadow: 0 20px 60px var(--color-shadow), 0 4px 16px rgba(0,0,0,0.06), 0 0 0 0.5px var(--color-border);"
       >
         <!-- Header -->
-        <div class="px-6 pt-5 pb-4 flex justify-between items-start flex-none">
+        <div
+          class="px-6 pt-5 pb-4 flex justify-between items-start flex-none select-none"
+          ondblclick={() => (isMaximized = !isMaximized)}
+          role="none"
+        >
           <div class="flex flex-col gap-0.5">
             <Dialog.Title
               class="text-[15px] font-semibold text-text-primary tracking-tight"
@@ -169,7 +178,7 @@
             </div>
           </div>
 
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
             <!-- Sort Keys toggle -->
             <button
               onclick={() => (shouldSortKeys = !shouldSortKeys)}
@@ -180,7 +189,7 @@
 
             <!-- Layout toggle -->
             <div
-              class="flex items-center bg-neutral-bg rounded-md p-0.5 gap-0.5"
+              class="flex items-center bg-neutral-bg rounded-md p-0.5 gap-0.5 mr-1"
             >
               <button
                 onclick={() => (diffStyle = "split")}
@@ -201,6 +210,21 @@
                 {i18n.t("unified")}
               </button>
             </div>
+
+            <!-- Maximize / Minimize button -->
+            <button
+              type="button"
+              onclick={() => (isMaximized = !isMaximized)}
+              class="w-7 h-7 grid place-items-center rounded-full text-text-secondary hover:text-text-primary hover:bg-neutral-bg transition-all cursor-pointer"
+              title={isMaximized ? "Restore" : "Maximize"}
+              aria-label={isMaximized ? "Restore" : "Maximize"}
+            >
+              {#if isMaximized}
+                <Minimize class="size-3.5" />
+              {:else}
+                <Maximize class="size-3.5" />
+              {/if}
+            </button>
 
             <Dialog.CloseTrigger
               onclick={handleClose}
