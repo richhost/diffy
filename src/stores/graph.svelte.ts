@@ -1,5 +1,6 @@
 import type { Node, Edge } from "@xyflow/svelte";
 import { storage } from "@wxt-dev/storage";
+import { layoutGraph } from "~/utils/layout";
 
 const STORAGE_KEY = "local:diffy:graph:v1";
 
@@ -72,6 +73,52 @@ class GraphStore {
   nodeCounter = $state(DEFAULT_GRAPH.nodeCounter);
   loading = $state(true);
   showUndoToast = $state(false);
+  hoveredNodeId = $state<string | null>(null);
+  hoveredEdgeId = $state<string | null>(null);
+
+  setHoveredNode(id: string | null) {
+    this.hoveredNodeId = id;
+  }
+
+  setHoveredEdge(id: string | null) {
+    this.hoveredEdgeId = id;
+  }
+
+  get connectedNodeIds(): Set<string> {
+    const set = new Set<string>();
+    if (this.hoveredNodeId) {
+      set.add(this.hoveredNodeId);
+      for (const e of this.edges) {
+        if (e.source === this.hoveredNodeId) set.add(e.target);
+        if (e.target === this.hoveredNodeId) set.add(e.source);
+      }
+    } else if (this.hoveredEdgeId) {
+      const edge = this.edges.find((e) => e.id === this.hoveredEdgeId);
+      if (edge) {
+        set.add(edge.source);
+        set.add(edge.target);
+      }
+    }
+    return set;
+  }
+
+  get connectedEdgeIds(): Set<string> {
+    const set = new Set<string>();
+    if (this.hoveredEdgeId) {
+      set.add(this.hoveredEdgeId);
+    } else if (this.hoveredNodeId) {
+      for (const e of this.edges) {
+        if (e.source === this.hoveredNodeId || e.target === this.hoveredNodeId) {
+          set.add(e.id);
+        }
+      }
+    }
+    return set;
+  }
+
+  get hasFocus(): boolean {
+    return this.hoveredNodeId !== null || this.hoveredEdgeId !== null;
+  }
 
   private lastDeletedNode: JasonNode | null = null;
   private lastDeletedEdges: Edge[] = [];
@@ -141,6 +188,11 @@ class GraphStore {
     this.nodes = this.nodes.map((n) =>
       n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n,
     );
+    this.persist();
+  }
+
+  autoLayout() {
+    this.nodes = layoutGraph(this.nodes, this.edges);
     this.persist();
   }
 

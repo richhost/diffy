@@ -10,6 +10,8 @@
   import X from "@tabler/icons-svelte-runes/icons/x";
   import Maximize from "@tabler/icons-svelte-runes/icons/maximize";
   import Minimize from "@tabler/icons-svelte-runes/icons/minimize";
+  import ChevronUp from "@tabler/icons-svelte-runes/icons/chevron-up";
+  import ChevronDown from "@tabler/icons-svelte-runes/icons/chevron-down";
   import { diffStore } from "~/stores/diff.svelte";
   import { themeStore } from "~/stores/theme.svelte";
   import { sortJSONKeys } from "~/utils/json";
@@ -17,6 +19,8 @@
 
   let shouldSortKeys = $state(false);
   let isMaximized = $state(false);
+  let diffChunks = $state<HTMLElement[]>([]);
+  let currentChunkIndex = $state(0);
 
   // Register diffs-container custom element
   if (typeof window !== "undefined" && !customElements.get("diffs-container")) {
@@ -42,7 +46,126 @@
       --diffs-font-family: "Google Sans Code Variable", ui-monospace, monospace;
       --diffs-header-font-family: "Geist Sans", -apple-system, sans-serif;
     }
+    @keyframes diff-focus-pulse {
+      0% {
+        box-shadow: inset 0 0 0 2px var(--color-primary, #3b82f6), 0 0 10px var(--color-primary, #3b82f6);
+      }
+      60% {
+        box-shadow: inset 0 0 0 2px var(--color-primary, #3b82f6), 0 0 4px var(--color-primary, #3b82f6);
+      }
+      100% {
+        box-shadow: none;
+      }
+    }
+    .diff-highlight-active {
+      animation: diff-focus-pulse 1.8s ease-out forwards !important;
+      position: relative !important;
+      z-index: 5 !important;
+    }
   `;
+
+  function collectDiffChunks(): HTMLElement[] {
+    const container = diffContainer?.querySelector("diffs-container");
+    if (!container || !container.shadowRoot) return [];
+
+    const changeElements = Array.from(
+      container.shadowRoot.querySelectorAll<HTMLElement>(
+        'div[data-line-type="change-addition"], div[data-line-type="change-deletion"]'
+      )
+    );
+
+    if (changeElements.length === 0) return [];
+
+    const sorted = [...changeElements].sort((a, b) => a.offsetTop - b.offsetTop);
+    const chunks: HTMLElement[] = [];
+    let prevTop = -9999;
+    const ROW_HEIGHT_THRESHOLD = 32;
+
+    for (const el of sorted) {
+      if (el.offsetTop - prevTop > ROW_HEIGHT_THRESHOLD) {
+        chunks.push(el);
+      }
+      prevTop = el.offsetTop;
+    }
+
+    return chunks;
+  }
+
+  function updateDiffChunks() {
+    setTimeout(() => {
+      diffChunks = collectDiffChunks();
+      if (diffChunks.length > 0) {
+        if (currentChunkIndex === 0 || currentChunkIndex > diffChunks.length) {
+          currentChunkIndex = 1;
+        }
+      } else {
+        currentChunkIndex = 0;
+      }
+    }, 60);
+  }
+
+  function scrollToChunk(index: number, applyHighlight = true) {
+    if (diffChunks.length === 0 || index < 1 || index > diffChunks.length) return;
+    currentChunkIndex = index;
+    const target = diffChunks[index - 1];
+    if (!target) return;
+
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    if (applyHighlight) {
+      const container = diffContainer?.querySelector("diffs-container");
+      if (container && container.shadowRoot) {
+        container.shadowRoot.querySelectorAll(".diff-highlight-active").forEach((el) => {
+          el.classList.remove("diff-highlight-active");
+        });
+      }
+      target.classList.add("diff-highlight-active");
+      setTimeout(() => {
+        target.classList.remove("diff-highlight-active");
+      }, 2000);
+    }
+  }
+
+  function goToNextDiff() {
+    if (diffChunks.length === 0) return;
+    const next = currentChunkIndex >= diffChunks.length ? 1 : currentChunkIndex + 1;
+    scrollToChunk(next);
+  }
+
+  function goToPrevDiff() {
+    if (diffChunks.length === 0) return;
+    const prev = currentChunkIndex <= 1 ? diffChunks.length : currentChunkIndex - 1;
+    scrollToChunk(prev);
+  }
+
+  $effect(() => {
+    if (!diffStore.open) return;
+
+    function onKeydown(e: KeyboardEvent) {
+      if (["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName)) return;
+
+      if (
+        e.key === "]" ||
+        (e.altKey && e.key === "ArrowDown") ||
+        (e.key.toLowerCase() === "n" && !e.metaKey && !e.ctrlKey)
+      ) {
+        e.preventDefault();
+        goToNextDiff();
+      } else if (
+        e.key === "[" ||
+        (e.altKey && e.key === "ArrowUp") ||
+        (e.key.toLowerCase() === "p" && !e.metaKey && !e.ctrlKey)
+      ) {
+        e.preventDefault();
+        goToPrevDiff();
+      }
+    }
+
+    window.addEventListener("keydown", onKeydown);
+    return () => {
+      window.removeEventListener("keydown", onKeydown);
+    };
+  });
 
   $effect(() => {
     if (!diffStore.open || !diffContainer) return;
@@ -110,6 +233,8 @@
           fileDiff,
           fileContainer: container,
         });
+
+        updateDiffChunks();
       } catch (e) {
         console.error("Failed to render diff:", e);
       }
@@ -163,7 +288,10 @@
         <!-- Header -->
         <div
           class="px-6 pt-5 pb-4 flex justify-between items-start flex-none select-none"
-          ondblclick={() => (isMaximized = !isMaximized)}
+          ondblclick={(e) => {
+            if ((e.target as HTMLElement)?.closest("button, input, select, [role='button']")) return;
+            isMaximized = !isMaximized;
+          }}
           role="none"
         >
           <div class="flex flex-col gap-0.5">
@@ -179,6 +307,45 @@
           </div>
 
           <div class="flex items-center gap-2">
+            <!-- Diff Navigation Stepper -->
+            <div
+              class="flex items-center bg-neutral-bg rounded-md p-0.5 gap-0.5 mr-0.5 text-[11px] font-medium text-text-secondary select-none"
+            >
+              <button
+                type="button"
+                onclick={goToPrevDiff}
+                disabled={diffChunks.length === 0}
+                class="w-6 h-6 rounded-[var(--radius-sm)] grid place-items-center hover:text-text-primary hover:bg-surface disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
+                title={i18n.t("prevDiff")}
+                aria-label={i18n.t("prevDiff")}
+              >
+                <ChevronUp class="size-3.5" />
+              </button>
+
+              <span
+                class="px-1.5 text-[11px] font-mono tabular-nums font-medium {diffChunks.length > 0
+                  ? 'text-text-primary'
+                  : 'text-text-quaternary'}"
+              >
+                {#if diffChunks.length > 0}
+                  {currentChunkIndex} / {diffChunks.length}
+                {:else}
+                  0 / 0
+                {/if}
+              </span>
+
+              <button
+                type="button"
+                onclick={goToNextDiff}
+                disabled={diffChunks.length === 0}
+                class="w-6 h-6 rounded-[var(--radius-sm)] grid place-items-center hover:text-text-primary hover:bg-surface disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
+                title={i18n.t("nextDiff")}
+                aria-label={i18n.t("nextDiff")}
+              >
+                <ChevronDown class="size-3.5" />
+              </button>
+            </div>
+
             <!-- Sort Keys toggle -->
             <button
               onclick={() => (shouldSortKeys = !shouldSortKeys)}

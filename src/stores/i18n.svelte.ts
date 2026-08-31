@@ -4,6 +4,7 @@ import { storage } from "@wxt-dev/storage";
 const dictionaries = {
   en: {
     addNode: "Add Node",
+    autoLayout: "Auto Layout",
     import: "Import",
     export: "Export",
     help: "Help",
@@ -44,9 +45,13 @@ const dictionaries = {
     themeSystem: "System",
     themeLight: "Light",
     themeDark: "Dark",
+    prevDiff: "Previous difference ([)",
+    nextDiff: "Next difference (])",
+    noDiffs: "No differences",
   },
   "zh-CN": {
     addNode: "添加节点",
+    autoLayout: "自动整理",
     import: "导入",
     export: "导出",
     help: "帮助",
@@ -86,9 +91,13 @@ const dictionaries = {
     themeSystem: "跟随系统",
     themeLight: "明亮模式",
     themeDark: "暗色模式",
+    prevDiff: "上一处差异 ([)",
+    nextDiff: "下一处差异 (])",
+    noDiffs: "无差异",
   },
   "zh-TW": {
     addNode: "新增節點",
+    autoLayout: "自動整理",
     import: "匯入",
     export: "匯出",
     help: "說明",
@@ -128,9 +137,13 @@ const dictionaries = {
     themeSystem: "跟隨系統",
     themeLight: "明亮模式",
     themeDark: "暗色模式",
+    prevDiff: "上一個差異 ([)",
+    nextDiff: "下一個差異 (])",
+    noDiffs: "無差異",
   },
   ja: {
     addNode: "ノードを追加",
+    autoLayout: "自動整列",
     import: "インポート",
     export: "エクスポート",
     help: "ヘルプ",
@@ -172,6 +185,9 @@ const dictionaries = {
     themeSystem: "システム",
     themeLight: "ライト",
     themeDark: "ダーク",
+    prevDiff: "前の差分 ([)",
+    nextDiff: "次の差分 (])",
+    noDiffs: "差分なし",
   },
 };
 

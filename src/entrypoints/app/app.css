@@ -162,6 +162,10 @@ body {
 .svelte-flow .svelte-flow__edge-path {
   stroke: var(--edge-stroke, rgba(0, 0, 0, 0.2)) !important;
   stroke-width: 1.5px !important;
+  transition:
+    stroke 0.2s ease,
+    stroke-width 0.2s ease,
+    opacity 0.2s ease !important;
 }
 
 .svelte-flow .svelte-flow__edge.animated .svelte-flow__edge-path {

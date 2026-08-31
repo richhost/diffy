@@ -10,16 +10,25 @@
 
   let { data, id }: NodeProps<JasonNode> = $props();
 
+  const isConnected = $derived(graphStore.connectedNodeIds.has(id));
+  const isDirectHovered = $derived(graphStore.hoveredNodeId === id);
+  const isDimmed = $derived(graphStore.hasFocus && !isConnected);
+
   $inspect(data, id);
 </script>
 
 <div
   tabindex="0"
   role="button"
-  class="node-card flex flex-col w-64 group outline-none transition-shadow duration-200"
+  onmouseenter={() => graphStore.setHoveredNode(id)}
+  onmouseleave={() => graphStore.setHoveredNode(null)}
+  class="node-card flex flex-col w-64 group outline-none transition-all duration-200"
+  class:node-highlighted={isConnected}
+  class:node-direct-hover={isDirectHovered}
+  class:node-dimmed={isDimmed}
 >
-  <Handle type="target" position={Position.Left} />
-  <Handle type="source" position={Position.Right} />
+  <Handle type="target" position={Position.Left} class="handle-target" />
+  <Handle type="source" position={Position.Right} class="handle-source" />
 
   <div class="node-header px-4 py-1.5 flex items-center justify-between min-h-11">
     <span class="node-title text-[13px] font-semibold tracking-[-0.01em] select-none">
@@ -58,15 +67,23 @@
     box-shadow:
       0 1px 3px var(--color-shadow),
       0 1px 2px rgba(0, 0, 0, 0.04);
-    transition: border-color 0.22s ease-out, box-shadow 0.22s ease-out;
+    transition:
+      border-color 0.2s ease-out,
+      box-shadow 0.2s ease-out,
+      opacity 0.2s ease-out;
   }
 
-  .node-card:hover {
+  .node-card:hover,
+  .node-card.node-highlighted {
     border-color: var(--color-primary);
     box-shadow:
-      0 4px 16px var(--color-primary-light),
+      0 6px 20px var(--color-primary-light),
       0 1px 3px rgba(0, 0, 0, 0.05),
-      0 0 0 0.5px var(--color-primary);
+      0 0 0 1px var(--color-primary);
+  }
+
+  .node-card.node-dimmed {
+    opacity: 0.3;
   }
 
   .node-header {

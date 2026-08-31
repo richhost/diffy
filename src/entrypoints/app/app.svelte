@@ -16,6 +16,7 @@
   import type { Connection } from "@xyflow/svelte";
   import "@xyflow/svelte/dist/style.css";
   import Plus from "@tabler/icons-svelte-runes/icons/plus";
+  import Wand from "@tabler/icons-svelte-runes/icons/wand";
   import Download from "@tabler/icons-svelte-runes/icons/download";
   import Upload from "@tabler/icons-svelte-runes/icons/upload";
   import Sun from "@tabler/icons-svelte-runes/icons/sun";
@@ -134,6 +135,16 @@
           >
             <Plus class="size-3.5 text-[var(--color-primary)]" />
             {i18n.t("addNode")}
+          </button>
+          <div class="w-px h-4 bg-[var(--color-border)]"></div>
+          <button
+            onclick={() => graphStore.autoLayout()}
+            disabled={graphStore.nodes.length === 0}
+            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
+            title={i18n.t("autoLayout")}
+          >
+            <Wand class="size-3.5 text-[var(--color-text-secondary)]" />
+            {i18n.t("autoLayout")}
           </button>
           <div class="w-px h-4 bg-[var(--color-border)]"></div>
           <button

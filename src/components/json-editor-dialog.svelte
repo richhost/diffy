@@ -228,7 +228,10 @@
         <!-- Header -->
         <div
           class="px-6 pt-5 pb-4 flex justify-between items-center select-none"
-          ondblclick={() => (isMaximized = !isMaximized)}
+          ondblclick={(e) => {
+            if ((e.target as HTMLElement)?.closest("button, input, select, [role='button']")) return;
+            isMaximized = !isMaximized;
+          }}
           role="none"
         >
           <Dialog.Title class="text-[15px] font-semibold text-text-primary tracking-tight">
