@@ -86,13 +86,18 @@ class GraphStore {
 
   get connectedNodeIds(): Set<string> {
     const set = new Set<string>();
-    if (this.hoveredNodeId) {
+    const isHoveredNodeValid =
+      this.hoveredNodeId !== null && this.nodes.some((n) => n.id === this.hoveredNodeId);
+    const isHoveredEdgeValid =
+      this.hoveredEdgeId !== null && this.edges.some((e) => e.id === this.hoveredEdgeId);
+
+    if (isHoveredNodeValid && this.hoveredNodeId) {
       set.add(this.hoveredNodeId);
       for (const e of this.edges) {
         if (e.source === this.hoveredNodeId) set.add(e.target);
         if (e.target === this.hoveredNodeId) set.add(e.source);
       }
-    } else if (this.hoveredEdgeId) {
+    } else if (isHoveredEdgeValid && this.hoveredEdgeId) {
       const edge = this.edges.find((e) => e.id === this.hoveredEdgeId);
       if (edge) {
         set.add(edge.source);
@@ -104,9 +109,14 @@ class GraphStore {
 
   get connectedEdgeIds(): Set<string> {
     const set = new Set<string>();
-    if (this.hoveredEdgeId) {
+    const isHoveredNodeValid =
+      this.hoveredNodeId !== null && this.nodes.some((n) => n.id === this.hoveredNodeId);
+    const isHoveredEdgeValid =
+      this.hoveredEdgeId !== null && this.edges.some((e) => e.id === this.hoveredEdgeId);
+
+    if (isHoveredEdgeValid && this.hoveredEdgeId) {
       set.add(this.hoveredEdgeId);
-    } else if (this.hoveredNodeId) {
+    } else if (isHoveredNodeValid && this.hoveredNodeId) {
       for (const e of this.edges) {
         if (e.source === this.hoveredNodeId || e.target === this.hoveredNodeId) {
           set.add(e.id);
@@ -117,7 +127,11 @@ class GraphStore {
   }
 
   get hasFocus(): boolean {
-    return this.hoveredNodeId !== null || this.hoveredEdgeId !== null;
+    const isNodeValid =
+      this.hoveredNodeId !== null && this.nodes.some((n) => n.id === this.hoveredNodeId);
+    const isEdgeValid =
+      this.hoveredEdgeId !== null && this.edges.some((e) => e.id === this.hoveredEdgeId);
+    return isNodeValid || isEdgeValid;
   }
 
   private lastDeletedNode: JasonNode | null = null;
@@ -201,10 +215,15 @@ class GraphStore {
     this.nodes = fresh.nodes;
     this.edges = fresh.edges;
     this.nodeCounter = fresh.nodeCounter;
+    this.hoveredNodeId = null;
+    this.hoveredEdgeId = null;
     this.persist();
   }
 
   deleteNode(nodeId: string) {
+    if (this.hoveredNodeId === nodeId) {
+      this.hoveredNodeId = null;
+    }
     const node = this.nodes.find((n) => n.id === nodeId);
     if (node) {
       this.lastDeletedNode = node;
@@ -242,6 +261,9 @@ class GraphStore {
   }
 
   deleteEdge(edgeId: string) {
+    if (this.hoveredEdgeId === edgeId) {
+      this.hoveredEdgeId = null;
+    }
     this.edges = this.edges.filter((e) => e.id !== edgeId);
     this.persist();
   }
@@ -258,6 +280,8 @@ class GraphStore {
     this.nodes = parsed.nodes;
     this.edges = parsed.edges;
     this.nodeCounter = maxId + 1;
+    this.hoveredNodeId = null;
+    this.hoveredEdgeId = null;
     this.persist();
   }
 }

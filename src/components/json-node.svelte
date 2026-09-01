@@ -14,6 +14,14 @@
   const isDirectHovered = $derived(graphStore.hoveredNodeId === id);
   const isDimmed = $derived(graphStore.hasFocus && !isConnected);
 
+  $effect(() => {
+    return () => {
+      if (graphStore.hoveredNodeId === id) {
+        graphStore.setHoveredNode(null);
+      }
+    };
+  });
+
   $inspect(data, id);
 </script>
 

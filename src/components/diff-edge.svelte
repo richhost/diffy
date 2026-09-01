@@ -23,6 +23,14 @@
     style,
   }: EdgeProps = $props();
 
+  $effect(() => {
+    return () => {
+      if (graphStore.hoveredEdgeId === id) {
+        graphStore.setHoveredEdge(null);
+      }
+    };
+  });
+
   const [edgePath, labelX, labelY] = $derived(
     getBezierPath({
       sourceX,

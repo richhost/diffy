@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import Loader4 from "@tabler/icons-svelte-runes/icons/loader-4";
   import X from "@tabler/icons-svelte-runes/icons/x";
   import { graphStore } from "~/stores/graph.svelte";
