@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { EditorView, basicSetup } from "codemirror";
-  import { EditorState, Compartment } from "@codemirror/state";
+  import { EditorState, Compartment, EditorSelection } from "@codemirror/state";
   import { json } from "@codemirror/lang-json";
   import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
   import { tags as t } from "@lezer/highlight";
@@ -142,7 +142,7 @@
     dom.appendChild(row1);
     dom.appendChild(row2);
 
-    function commit() {
+    function commit(scroll = false) {
       const nextQuery = new SearchQuery({
         search: searchInput.value,
         replace: replaceInput.value,
@@ -150,11 +150,41 @@
         regexp: regexToggle.checked,
         wholeWord: wordToggle.checked,
       });
+
+      if (!nextQuery.valid || !searchInput.value) {
+        view.dispatch({ effects: setSearchQuery.of(nextQuery) });
+        return;
+      }
+
+      if (scroll) {
+        try {
+          const queryObj = nextQuery.create();
+          const match = queryObj.nextMatch(
+            view.state,
+            view.state.selection.main.from,
+            view.state.selection.main.to
+          );
+          if (match) {
+            const selection = EditorSelection.single(match.from, match.to);
+            view.dispatch({
+              selection,
+              effects: [
+                setSearchQuery.of(nextQuery),
+                EditorView.scrollIntoView(selection.main, { y: "center" }),
+              ],
+              userEvent: "select.search",
+            });
+            return;
+          }
+        } catch (err) {
+          console.error("Search error:", err);
+        }
+      }
       view.dispatch({ effects: setSearchQuery.of(nextQuery) });
     }
 
-    searchInput.oninput = commit;
-    replaceInput.oninput = commit;
+    searchInput.oninput = () => commit(true);
+    replaceInput.oninput = () => commit(false);
 
     dom.onkeydown = (e) => {
       if (e.key === "Enter") {
@@ -174,6 +204,7 @@
 
     return {
       dom,
+      top: false,
       mount() {
         searchInput.select();
       },
@@ -230,6 +261,15 @@
             left: "0 !important",
             zIndex: "10 !important",
           },
+          ".cm-panels": {
+            position: "static !important",
+            flexShrink: "0 !important",
+          },
+          ".cm-panels-bottom": {
+            position: "static !important",
+            bottom: "auto !important",
+            borderTop: "1px solid var(--color-border) !important",
+          },
           ".cm-activeLineGutter": { background: "transparent !important" },
           ".cm-activeLine": { background: "rgba(255, 255, 255, 0.035) !important" },
           ".cm-cursor": { borderLeftColor: "var(--color-primary) !important" },
@@ -269,6 +309,15 @@
           left: "0 !important",
           zIndex: "10 !important",
         },
+        ".cm-panels": {
+          position: "static !important",
+          flexShrink: "0 !important",
+        },
+        ".cm-panels-bottom": {
+          position: "static !important",
+          bottom: "auto !important",
+          borderTop: "1px solid var(--color-border) !important",
+        },
         ".cm-activeLineGutter": { background: "transparent !important" },
         ".cm-activeLine": { background: "rgba(0,0,0,0.025) !important" },
         ".cm-cursor": { borderLeftColor: "var(--color-primary) !important" },
@@ -294,7 +343,12 @@
       doc: untrack(() => value),
       extensions: [
         basicSetup,
-        search({ createPanel: (view) => createCustomSearchPanel(view), top: true }),
+        search({
+          createPanel: (view) => createCustomSearchPanel(view),
+          top: false,
+          scrollToMatch: (range) => EditorView.scrollIntoView(range, { y: "center" }),
+        }),
+        EditorView.cursorScrollMargin.of({ top: 40, bottom: 40 }),
         json(),
         themeCompartment.of(getThemeExtensions(untrack(() => themeStore.isDark))),
         EditorState.tabSize.of(2),
@@ -392,6 +446,18 @@
     min-height: 0 !important;
     display: flex !important;
     flex-direction: column !important;
+  }
+  :global(.cm-panels) {
+    position: static !important;
+    flex-shrink: 0 !important;
+    z-index: 10 !important;
+    width: 100% !important;
+    background: var(--color-surface, #ffffff) !important;
+  }
+  :global(.cm-panels-bottom) {
+    position: static !important;
+    bottom: auto !important;
+    border-top: 1px solid var(--color-border, rgba(0, 0, 0, 0.08)) !important;
   }
   :global(.cm-scroller) {
     overflow: auto !important;
