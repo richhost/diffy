@@ -118,7 +118,7 @@
       <Background
         gap={24}
         size={1}
-        patternColor={themeStore.isDark ? "#27272a" : "#d4d4d8"}
+        patternColor={themeStore.isDark ? "#1f2430" : "#d4d4d8"}
       />
       <MiniMap />
       <Controls />

@@ -77,21 +77,21 @@
 .dark,
 [data-theme="dark"] {
   color-scheme: dark;
-  --primary: oklch(68% 0.21 260); /* Vibrant Clean Accent Blue */
-  --primary-hover: oklch(74% 0.22 260);
-  --primary-light: oklch(68% 0.21 260 / 0.2);
-  --neutral-bg: oklch(14% 0.005 285); /* Clean Dark Canvas #0f1013 */
-  --surface: oklch(18.5% 0.008 285); /* Elevated Dark Surface #18191e */
-  --text-primary: oklch(96% 0.003 285); /* Crisp Light Text #f4f4f6 */
-  --text-secondary: oklch(72% 0.01 285); /* Subtle Secondary Text #a1a1aa */
-  --text-tertiary: oklch(52% 0.01 285); /* Muted Tertiary Text #71717a */
-  --text-quaternary: oklch(38% 0.008 285); /* Low-key Quaternary #52525b */
-  --success: oklch(72% 0.18 145); /* Green for added items */
-  --success-bg: oklch(72% 0.18 145 / 0.15);
-  --danger: oklch(68% 0.22 25); /* Red for removed items/actions */
-  --danger-bg: oklch(68% 0.22 25 / 0.15);
-  --border-color: oklch(100% 0 0 / 0.08); /* Subtle hairline light divider */
-  --shadow-color: oklch(0% 0 0 / 0.5);
+  --primary: #59c2ff; /* Ayu Bright Sky Blue */
+  --primary-hover: #7ad1ff;
+  --primary-light: rgba(89, 194, 255, 0.18);
+  --neutral-bg: #0d1016; /* Ayu Dark Deep Canvas */
+  --surface: #131721; /* Ayu Dark Elevated Surface */
+  --text-primary: #bfbdb6; /* Ayu Warm Light Gray */
+  --text-secondary: #8c8b88; /* Ayu Muted Gray */
+  --text-tertiary: #5c6773; /* Ayu Comments / Low Contrast Gray */
+  --text-quaternary: #434c56; /* Subtle gutter / inactive */
+  --success: #aad94c; /* Ayu Lime Green (diff.plus) */
+  --success-bg: rgba(170, 217, 76, 0.15);
+  --danger: #f07178; /* Ayu Coral Red (diff.minus) */
+  --danger-bg: rgba(240, 113, 120, 0.15);
+  --border-color: rgba(255, 255, 255, 0.08); /* Subtle hairline light divider */
+  --shadow-color: rgba(0, 0, 0, 0.5);
 
   --scrollbar-thumb: rgba(255, 255, 255, 0.14);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);

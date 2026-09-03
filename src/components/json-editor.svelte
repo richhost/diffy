@@ -5,7 +5,6 @@
   import { json } from "@codemirror/lang-json";
   import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
   import { tags as t } from "@lezer/highlight";
-  import { oneDark } from "@codemirror/theme-one-dark";
   import { themeStore } from "~/stores/theme.svelte";
 
   const pierreLightHighlightStyle = HighlightStyle.define([
@@ -17,6 +16,18 @@
     { tag: t.separator, color: "#1d1d1f" },
     { tag: t.brace, color: "#1d1d1f" },
     { tag: t.bracket, color: "#1d1d1f" },
+  ]);
+
+  const ayuDarkHighlightStyle = HighlightStyle.define([
+    { tag: t.propertyName, color: "#59c2ff" },
+    { tag: t.string, color: "#aad94c" },
+    { tag: t.number, color: "#d2a6ff" },
+    { tag: t.bool, color: "#ff8f40" },
+    { tag: t.null, color: "#ff8f40" },
+    { tag: t.separator, color: "#8c8b88" },
+    { tag: t.brace, color: "#8c8b88" },
+    { tag: t.bracket, color: "#8c8b88" },
+    { tag: t.punctuation, color: "#8c8b88" },
   ]);
 
   import {
@@ -158,12 +169,8 @@
 
       if (scroll) {
         try {
-          const queryObj = nextQuery.create();
-          const match = queryObj.nextMatch(
-            view.state,
-            view.state.selection.main.from,
-            view.state.selection.main.to
-          );
+          const cursor = nextQuery.getCursor(view.state, view.state.selection.main.from);
+          const match = cursor.next().value;
           if (match) {
             const selection = EditorSelection.single(match.from, match.to);
             view.dispatch({
@@ -233,7 +240,7 @@
   function getThemeExtensions(isDark: boolean) {
     if (isDark) {
       return [
-        oneDark,
+        syntaxHighlighting(ayuDarkHighlightStyle),
         EditorView.theme({
           "&": {
             flex: "1",
@@ -243,6 +250,7 @@
             background: "transparent !important",
             fontSize: "13px !important",
             fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
+            color: "#bfbdb6 !important",
           },
           ".cm-content": {
             fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
@@ -274,6 +282,9 @@
           ".cm-activeLine": { background: "rgba(255, 255, 255, 0.035) !important" },
           ".cm-cursor": { borderLeftColor: "var(--color-primary) !important" },
           ".cm-selectionBackground": {
+            background: "var(--color-primary-light) !important",
+          },
+          "&.cm-focused .cm-selectionBackground": {
             background: "var(--color-primary-light) !important",
           },
         }),
@@ -348,7 +359,7 @@
           top: false,
           scrollToMatch: (range) => EditorView.scrollIntoView(range, { y: "center" }),
         }),
-        EditorView.cursorScrollMargin.of({ top: 40, bottom: 40 }),
+        EditorView.cursorScrollMargin.of({ x: 0, y: 40 }),
         json(),
         themeCompartment.of(getThemeExtensions(untrack(() => themeStore.isDark))),
         EditorState.tabSize.of(2),

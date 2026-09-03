@@ -18,7 +18,7 @@
   }: Props = $props();
 
   const activeTheme = $derived(
-    theme ?? (themeStore.isDark ? "github-dark" : "pierre-light"),
+    theme ?? (themeStore.isDark ? "ayu-dark" : "pierre-light"),
   );
 
   type TokenLine = ThemedToken[];
@@ -36,7 +36,7 @@
     }
 
     const highlighter = await getSharedHighlighter({
-      themes: [t, "pierre-light", "github-dark"],
+      themes: [t, "pierre-light", "ayu-dark"],
       langs: ["json"],
     });
     const result = highlighter.codeToTokens(c, { lang: "json", theme: t });

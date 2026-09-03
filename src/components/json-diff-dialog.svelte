@@ -174,7 +174,7 @@
     diffContainer.appendChild(container);
 
     const isDark = themeStore.isDark;
-    const currentTheme = isDark ? "github-dark" : "pierre-light";
+    const currentTheme = isDark ? "ayu-dark" : "pierre-light";
     const currentThemeType = themeStore.resolvedTheme;
 
     const instance = new FileDiff({
@@ -193,7 +193,7 @@
     ) {
       try {
         await getSharedHighlighter({
-          themes: ["pierre-light", "github-dark"],
+          themes: ["pierre-light", "ayu-dark"],
           langs: ["json"],
         });
         if (!active) return;
@@ -247,7 +247,7 @@
       const _srcLbl = diffStore.sourceLabel;
       const _tgtLbl = diffStore.targetLabel;
       const _sort = shouldSortKeys;
-      const _theme = themeStore.isDark ? "github-dark" : "pierre-light";
+      const _theme = themeStore.isDark ? "ayu-dark" : "pierre-light";
       const _themeType = themeStore.resolvedTheme;
       render(currentStyle, _theme, _themeType);
     });
