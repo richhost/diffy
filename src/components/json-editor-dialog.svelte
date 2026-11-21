@@ -1,33 +1,60 @@
 <script lang="ts">
-  import { Dialog } from "@ark-ui/svelte/dialog";
-  import { Portal } from "@ark-ui/svelte/portal";
+  import {
+    Dialog,
+    DialogBackdrop,
+    DialogContent,
+    DialogTitle,
+    DialogClose,
+  } from "@ui-sdk/svelte/dialog";
+  import { Tooltip, TooltipTrigger, TooltipContent } from "@ui-sdk/svelte/tooltip";
   import { editorStore } from "~/stores/editor.svelte";
   import { graphStore } from "~/stores/graph.svelte";
   import JsonEditor from "./json-editor.svelte";
   import X from "@tabler/icons-svelte-runes/icons/x";
-  import Check from "@tabler/icons-svelte-runes/icons/check";
   import Maximize from "@tabler/icons-svelte-runes/icons/maximize";
   import Minimize from "@tabler/icons-svelte-runes/icons/minimize";
-  import { sortJSONKeys } from "~/utils/json";
+  import {
+    sortJSONKeys,
+    deepParseJSON,
+    parseLooseJSON,
+    checkCanDeepParse,
+    inspectJSONStatus,
+  } from "~/utils/json";
   import { i18n } from "~/stores/i18n.svelte";
 
   let labelValue = $state("");
   let jsonValue = $state("");
   let jsonError = $state<string | null>(null);
   let isMaximized = $state(false);
+  let editorRef = $state<ReturnType<typeof JsonEditor> | undefined>(undefined);
+
+  const jsonStatus = $derived(inspectJSONStatus(jsonValue));
+  const canDeepParse = $derived(checkCanDeepParse(jsonValue));
 
   $effect(() => {
     if (editorStore.open && editorStore.target) {
       labelValue = editorStore.target.label;
       jsonValue = editorStore.target.json;
       jsonError = null;
+      requestAnimationFrame(() => {
+        setTimeout(() => editorRef?.focus(), 30);
+      });
     }
   });
 
+  $effect(() => {
+    if (jsonStatus.status !== "invalid") {
+      jsonError = null;
+    }
+  });
+
+  function handleJumpToError() {
+    editorRef?.jumpToPosition(jsonStatus.errorPos);
+  }
+
   function handleSave() {
     try {
-      const parsed = JSON.parse(jsonValue);
-      const formatted = JSON.stringify(parsed, null, 2);
+      const formatted = jsonValue.trim() ? JSON.stringify(JSON.parse(jsonValue), null, 2) : "";
       if (editorStore.target) {
         graphStore.updateNodeData(editorStore.target.nodeId, {
           label: labelValue.trim() || "Untitled Node",
@@ -37,6 +64,7 @@
       editorStore.close();
     } catch (e: any) {
       jsonError = e.message || "Invalid JSON";
+      handleJumpToError();
     }
   }
 
@@ -44,77 +72,24 @@
     editorStore.close();
   }
 
-  function deepParseJSON(val: any): any {
-    if (typeof val === "string") {
-      const trimmed = val.trim();
-      if (
-        (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-        (trimmed.startsWith("[") && trimmed.endsWith("]"))
-      ) {
-        try {
-          const parsed = JSON.parse(trimmed);
-          return deepParseJSON(parsed);
-        } catch (e) {
-          return val;
-        }
-      }
-      
-      if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-        try {
-          const unescaped = JSON.parse(trimmed);
-          return deepParseJSON(unescaped);
-        } catch (e) {
-          return val;
-        }
-      }
-      
-      return val;
+  function handleFormat() {
+    if (!jsonValue.trim()) return;
+    try {
+      const parsed = JSON.parse(jsonValue);
+      jsonValue = JSON.stringify(parsed, null, 2);
+      jsonError = null;
+    } catch (e: any) {
+      jsonError = e.message || "Invalid JSON";
+      handleJumpToError();
     }
-    
-    if (Array.isArray(val)) {
-      return val.map(item => deepParseJSON(item));
-    }
-    
-    if (typeof val === "object" && val !== null) {
-      const copy: any = {};
-      for (const key in val) {
-        if (Object.prototype.hasOwnProperty.call(val, key)) {
-          copy[key] = deepParseJSON(val[key]);
-        }
-      }
-      return copy;
-    }
-    
-    return val;
   }
 
   function handleDeepParse() {
-    let raw = jsonValue.trim();
+    const raw = jsonValue.trim();
     if (!raw) return;
 
     try {
-      let parsed: any;
-      
-      if (raw.startsWith('"') && raw.endsWith('"')) {
-        const unescaped = JSON.parse(raw);
-        if (typeof unescaped === "string") {
-          parsed = JSON.parse(unescaped);
-        } else {
-          parsed = unescaped;
-        }
-      } else {
-        try {
-          parsed = JSON.parse(raw);
-        } catch (innerErr) {
-          const replaced = raw.replace(/\\"/g, '"');
-          parsed = JSON.parse(replaced);
-        }
-      }
-
-      if (typeof parsed === "string") {
-        parsed = JSON.parse(parsed);
-      }
-
+      const parsed = parseLooseJSON(raw);
       const deepParsed = deepParseJSON(parsed);
 
       if (typeof deepParsed === "object" && deepParsed !== null) {
@@ -129,7 +104,7 @@
   }
 
   function handleSortKeys() {
-    let raw = jsonValue.trim();
+    const raw = jsonValue.trim();
     if (!raw) return;
 
     try {
@@ -139,201 +114,168 @@
       jsonError = null;
     } catch (e: any) {
       jsonError = "Failed to sort: " + (e.message || "Invalid JSON");
+      handleJumpToError();
     }
   }
-
-  function checkCanDeepParse(val: any): boolean {
-    if (typeof val === "string") {
-      const trimmed = val.trim();
-      if (
-        (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-        (trimmed.startsWith("[") && trimmed.endsWith("]"))
-      ) {
-        try {
-          const parsed = JSON.parse(trimmed);
-          if (typeof parsed === "object" && parsed !== null) {
-            return true;
-          }
-        } catch (e) {}
-      }
-      return false;
-    }
-    
-    if (Array.isArray(val)) {
-      return val.some(item => checkCanDeepParse(item));
-    }
-    
-    if (typeof val === "object" && val !== null) {
-      for (const key in val) {
-        if (Object.prototype.hasOwnProperty.call(val, key)) {
-          if (checkCanDeepParse(val[key])) {
-            return true;
-          }
-        }
-      }
-    }
-    
-    return false;
-  }
-
-  const showDeepParseButton = $derived.by(() => {
-    const raw = jsonValue.trim();
-    if (!raw) return false;
-    try {
-      let parsed: any;
-      if (raw.startsWith('"') && raw.endsWith('"')) {
-        const unescaped = JSON.parse(raw);
-        parsed = (typeof unescaped === "string") ? JSON.parse(unescaped) : unescaped;
-      } else {
-        try {
-          parsed = JSON.parse(raw);
-        } catch (innerErr) {
-          const replaced = raw.replace(/\\"/g, '"');
-          parsed = JSON.parse(replaced);
-        }
-      }
-      
-      if (typeof parsed === "string") {
-        parsed = JSON.parse(parsed);
-      }
-      
-      return checkCanDeepParse(parsed);
-    } catch (e) {
-      return false;
-    }
-  });
 </script>
 
-<Dialog.Root
+<Dialog
   open={editorStore.open}
-  onOpenChange={(e) => {
-    if (!e.open) editorStore.close();
+  presentation="dialog"
+  onOpenChange={(open) => {
+    if (!open) editorStore.close();
   }}
 >
-  <Portal>
-    <!-- Backdrop -->
-    <Dialog.Backdrop
-      class="fixed inset-0 z-40 bg-black/30 dark:bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-200"
-    />
+  <DialogBackdrop class="ui-dialog-backdrop" />
 
-    <Dialog.Positioner
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+  <DialogContent
+    onkeydown={(e) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+        const key = e.key.toLowerCase();
+        if (key === "f") {
+          e.preventDefault();
+          editorRef?.openSearch();
+        } else if (key === "s" || e.key === "Enter") {
+          e.preventDefault();
+          handleSave();
+        }
+      }
+    }}
+    class="ui-dialog-content flex flex-col overflow-hidden text-[var(--ink)] transition-[width,max-width,height] duration-180 ease-out {isMaximized
+      ? 'w-[94vw] max-w-[94vw] h-[92vh]'
+      : 'w-[calc(100vw-2rem)] max-w-4xl h-[80vh]'}"
+  >
+    <!-- Zone 1: Unified Header Bar -->
+    <div
+      class="px-4 py-2.5 flex items-center justify-between gap-3 border-b border-[var(--line)] select-none flex-none"
+      ondblclick={(e) => {
+        if ((e.target as HTMLElement)?.closest("button, input, select, [role='button']")) return;
+        isMaximized = !isMaximized;
+      }}
+      role="none"
     >
-      <Dialog.Content
-        class="w-full bg-surface rounded-(--radius-lg) overflow-hidden flex flex-col text-text-primary transition-all duration-200 ease-out animate-in fade-in zoom-in-95 slide-in-from-bottom-2 {isMaximized
-          ? 'max-w-[94vw] h-[92vh]'
-          : 'max-w-4xl h-[78vh]'}"
-        style="box-shadow: 0 20px 60px var(--color-shadow), 0 4px 16px rgba(0,0,0,0.06), 0 0 0 0.5px var(--color-border);"
-      >
-        <!-- Header -->
-        <div
-          class="px-6 pt-5 pb-4 flex justify-between items-center select-none"
-          ondblclick={(e) => {
-            if ((e.target as HTMLElement)?.closest("button, input, select, [role='button']")) return;
-            isMaximized = !isMaximized;
-          }}
-          role="none"
+      <DialogTitle class="sr-only">{i18n.t("editNode")}</DialogTitle>
+
+      <input
+        id="node-label"
+        type="text"
+        bind:value={labelValue}
+        placeholder={i18n.t("label")}
+        aria-label={i18n.t("label")}
+        onkeydown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            editorRef?.focus();
+          }
+        }}
+        class="h-7 w-56 max-w-[45vw] rounded-[6px] bg-transparent hover:bg-[var(--hover)] focus:bg-[var(--surface-subtle)] border border-transparent focus:border-[var(--border-strong)] px-2 text-[13.5px] font-medium text-[var(--ink)] placeholder-[var(--ink-quaternary)] outline-none transition-colors"
+      />
+
+      <div class="flex items-center gap-1 -mr-1">
+        {#if canDeepParse}
+          <button
+            type="button"
+            onclick={handleDeepParse}
+            class="h-7 px-2.5 rounded-[7px] text-[11.5px] font-medium text-[var(--ink)] bg-[var(--surface-subtle)] border border-[var(--border-strong)] hover:bg-[var(--hover)] transition-colors cursor-pointer animate-in fade-in duration-150"
+            title="Deeply parse any nested stringified JSON fields recursively"
+          >
+            {i18n.t("deepParse")}
+          </button>
+        {/if}
+
+        <button
+          type="button"
+          onclick={handleFormat}
+          disabled={jsonStatus.status !== "valid"}
+          class="h-7 px-2.5 rounded-[7px] text-[11.5px] font-medium text-[var(--ink-secondary)] hover:text-[var(--ink)] hover:bg-[var(--hover)] disabled:opacity-35 disabled:pointer-events-none transition-colors cursor-pointer"
+          title={`${i18n.t("format")} (Shift+Alt+F)`}
         >
-          <Dialog.Title class="text-[15px] font-semibold text-text-primary tracking-tight">
-            {i18n.t("editNode")}
-          </Dialog.Title>
-          <div class="flex items-center gap-1 -mr-1 -mt-0.5">
-            <button
-              type="button"
-              onclick={() => (isMaximized = !isMaximized)}
-              class="w-7 h-7 grid place-items-center rounded-full text-text-secondary hover:text-text-primary hover:bg-neutral-bg transition-all cursor-pointer"
-              title={isMaximized ? "Restore" : "Maximize"}
-              aria-label={isMaximized ? "Restore" : "Maximize"}
-            >
-              {#if isMaximized}
-                <Minimize class="size-3.5" />
-              {:else}
-                <Maximize class="size-3.5" />
-              {/if}
-            </button>
-            <Dialog.CloseTrigger
-              onclick={handleCancel}
-              class="w-7 h-7 grid place-items-center rounded-full text-text-secondary hover:text-text-primary hover:bg-neutral-bg transition-all cursor-pointer"
-              aria-label="Close"
-            >
-              <X class="size-4" />
-            </Dialog.CloseTrigger>
-          </div>
-        </div>
+          {i18n.t("format")}
+        </button>
 
-        <!-- Body -->
-        <div class="px-6 pb-4 flex-1 overflow-hidden flex flex-col gap-4 min-h-0">
-          <!-- Label field -->
-          <div class="flex flex-col gap-1.5">
-            <label
-              for="node-label"
-              class="text-[11px] font-semibold text-text-secondary tracking-tight"
-            >
-              {i18n.t("label")}
-            </label>
-            <input
-              id="node-label"
-              type="text"
-              bind:value={labelValue}
-              placeholder="Node Label"
-              class="w-full bg-neutral-bg rounded-md px-3.5 py-2.5 text-[13px] text-text-primary placeholder-text-quaternary font-medium outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-            />
-          </div>
+        <button
+          type="button"
+          onclick={handleSortKeys}
+          disabled={jsonStatus.status !== "valid"}
+          class="h-7 px-2.5 rounded-[7px] text-[11.5px] font-medium text-[var(--ink-secondary)] hover:text-[var(--ink)] hover:bg-[var(--hover)] disabled:opacity-35 disabled:pointer-events-none transition-colors cursor-pointer"
+          title="Sort JSON keys alphabetically"
+        >
+          {i18n.t("sortKeys")}
+        </button>
 
-          <!-- JSON editor -->
-          <div class="flex flex-col gap-1.5 flex-1 min-h-0">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-semibold text-text-secondary tracking-tight select-none">
-                {i18n.t("jsonContent")}
-              </span>
-              <div class="flex items-center gap-2">
-                {#if showDeepParseButton}
-                  <button
-                    onclick={handleDeepParse}
-                    class="px-2 py-0.5 rounded text-[11px] font-semibold text-primary hover:bg-primary-light transition-colors duration-150 cursor-pointer tracking-tight animate-in fade-in duration-200"
-                    title="Deeply parse any nested stringified JSON fields recursively"
-                  >
-                    {i18n.t("deepParse")}
-                  </button>
-                {/if}
-                <button
-                  onclick={handleSortKeys}
-                  class="px-2 py-0.5 rounded text-[11px] font-semibold text-primary hover:bg-primary-light transition-colors duration-150 cursor-pointer tracking-tight"
-                  title="Sort JSON keys alphabetically"
-                >
-                  {i18n.t("sortKeys")}
-                </button>
-              </div>
-            </div>
-            <div class="flex-1 bg-neutral-bg rounded-md overflow-hidden flex flex-col min-h-0">
-              <JsonEditor bind:value={jsonValue} />
-            </div>
-            {#if jsonError}
-              <div class="text-[11px] text-danger font-mono bg-danger-bg rounded-md px-3 py-2 flex-none">
-                {jsonError}
-              </div>
+        <div class="w-px h-3.5 bg-[var(--line)] mx-0.5"></div>
+
+        <Tooltip>
+          <TooltipTrigger
+            onclick={() => (isMaximized = !isMaximized)}
+            class="w-7 h-7 grid place-items-center rounded-[6px] text-[var(--ink-secondary)] hover:text-[var(--ink)] hover:bg-[var(--hover)] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-active)]"
+            aria-label={isMaximized ? "Restore" : "Maximize"}
+          >
+            {#if isMaximized}
+              <Minimize class="size-3.5" />
+            {:else}
+              <Maximize class="size-3.5" />
             {/if}
-          </div>
-        </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={6} class="ui-tooltip-content">
+            {isMaximized ? "Restore" : "Maximize"}
+          </TooltipContent>
+        </Tooltip>
 
-        <!-- Footer -->
-        <div class="px-6 pb-5 flex justify-end gap-2">
+        <DialogClose
+          class="w-7 h-7 grid place-items-center rounded-[6px] text-[var(--ink-secondary)] hover:text-[var(--ink)] hover:bg-[var(--hover)] transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-active)]"
+          aria-label="Close"
+        >
+          <X class="size-4" />
+        </DialogClose>
+      </div>
+    </div>
+
+    <!-- Zone 2: Edge-to-Edge CodeMirror Body -->
+    <div class="flex-1 min-h-0 flex flex-col bg-[var(--input-bg)]">
+      <JsonEditor
+        bind:this={editorRef}
+        bind:value={jsonValue}
+        wordWrap={true}
+        placeholderText={i18n.t("editorPlaceholder")}
+        onSave={handleSave}
+        onFormat={handleFormat}
+      />
+    </div>
+
+    <!-- Zone 3: Calm Footer Bar -->
+    <div
+      class="px-4 py-2.5 border-t border-[var(--line)] bg-[var(--surface)] flex items-center justify-between gap-3 flex-none"
+    >
+      <div class="min-w-0 flex-1 truncate">
+        {#if jsonError || jsonStatus.status === "invalid"}
           <button
-            onclick={handleCancel}
-            class="px-4 py-2 rounded-[var(--radius-md)] text-[13px] text-text-secondary hover:text-text-primary hover:bg-neutral-bg font-medium transition-all cursor-pointer"
+            type="button"
+            onclick={handleJumpToError}
+            class="text-[11.5px] font-mono text-[var(--danger)] truncate max-w-full hover:underline cursor-pointer outline-none text-left"
+            title={jsonError || jsonStatus.error}
           >
-            {i18n.t("cancel")}
+            {jsonError || jsonStatus.error}
           </button>
-          <button
-            onclick={handleSave}
-            class="flex items-center gap-1.5 px-4 py-2 rounded-[var(--radius-md)] text-[13px] font-medium text-white transition-all cursor-pointer hover:opacity-90 active:scale-[0.98]"
-            style="background: var(--color-primary);"
-          >
-            <Check class="size-3.5" />
-            {i18n.t("save")}
-          </button>
-        </div>
-      </Dialog.Content>
-    </Dialog.Positioner>
-  </Portal>
-</Dialog.Root>
+        {/if}
+      </div>
+
+      <div class="flex items-center gap-2 flex-none">
+        <button
+          type="button"
+          onclick={handleCancel}
+          class="px-3 py-1.5 rounded-[7px] bg-[var(--surface)] border border-[var(--border-color)] shadow-[var(--shadow-xs)] text-[12px] text-[var(--ink-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--ink)] hover:bg-[var(--hover)] font-medium transition-colors cursor-pointer"
+        >
+          {i18n.t("cancel")}
+        </button>
+        <button
+          type="button"
+          onclick={handleSave}
+          class="px-3.5 py-1.5 rounded-[7px] border border-transparent text-[12px] font-medium bg-[var(--ink)] text-[var(--on-ink)] shadow-[var(--shadow-xs)] hover:opacity-88 transition-opacity cursor-pointer"
+        >
+          {i18n.t("save")}
+        </button>
+      </div>
+    </div>
+  </DialogContent>
+</Dialog>

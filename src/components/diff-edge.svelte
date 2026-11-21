@@ -4,6 +4,7 @@
   import { parseDiffFromFile } from "@pierre/diffs";
   import Trash from "@tabler/icons-svelte-runes/icons/trash";
   import GitCompare from "@tabler/icons-svelte-runes/icons/git-compare";
+  import { Tooltip, TooltipTrigger, TooltipContent } from "@ui-sdk/svelte/tooltip";
   import { graphStore } from "~/stores/graph.svelte";
   import { diffStore } from "~/stores/diff.svelte";
   import { i18n } from "~/stores/i18n.svelte";
@@ -18,7 +19,6 @@
     targetY,
     sourcePosition,
     targetPosition,
-    markerEnd,
     markerStart,
     style,
   }: EdgeProps = $props();
@@ -50,8 +50,8 @@
   const diffMeta = $derived.by(() => {
     if (!sourceNode || !targetNode) return null;
     try {
-      JSON.parse(sourceJson);
-      JSON.parse(targetJson);
+      if (sourceJson.trim()) JSON.parse(sourceJson);
+      if (targetJson.trim()) JSON.parse(targetJson);
       const oldFile = {
         name: (sourceNode.data.label || "source") + ".json",
         contents: sourceJson,
@@ -71,7 +71,7 @@
   const isEdgeActive = $derived(graphStore.connectedEdgeIds.has(id));
   const isDimmed = $derived(graphStore.hasFocus && !isEdgeActive);
   const tooltipText = $derived(
-    `${sourceNode?.data?.label || "Source"} → ${targetNode?.data?.label || "Target"}`
+    `${sourceNode?.data?.label || "Source"} → ${targetNode?.data?.label || "Target"}`,
   );
   const markerId = $derived(`diffy-arrow-${id}`);
 </script>
@@ -89,8 +89,8 @@
       orient="auto-start-reverse"
     >
       <path
-        d="M 0 1.5 L 8 5 L 0 8.5 z"
-        fill={isEdgeActive ? 'var(--color-primary)' : 'var(--edge-stroke, rgba(0, 0, 0, 0.25))'}
+        d="M 0 1.5 L 8.5 5 L 0 8.5 z"
+        fill={isEdgeActive ? "var(--edge-stroke-active)" : "var(--edge-stroke)"}
       />
     </marker>
   </defs>
@@ -102,25 +102,27 @@
   markerEnd="url(#{markerId})"
   {markerStart}
   style="{style ?? ''}; {isEdgeActive
-    ? 'stroke: var(--color-primary) !important; stroke-width: 2.5px !important; opacity: 1 !important; z-index: 10 !important;'
+    ? 'stroke: var(--edge-stroke-active) !important; stroke-width: 1.75px !important; opacity: 1 !important; z-index: 10 !important;'
     : isDimmed
-      ? 'opacity: 0.2 !important; stroke-width: 1px !important;'
+      ? 'opacity: 0.2 !important; stroke-width: 1.25px !important;'
       : ''}"
 />
 
-<!-- Edge label pill -->
-<EdgeLabel x={labelX} y={labelY}>
+<!-- Edge label badge -->
+<EdgeLabel x={labelX} y={labelY} transparent>
   <div
     role="group"
     onmouseenter={() => graphStore.setHoveredEdge(id)}
     onmouseleave={() => graphStore.setHoveredEdge(null)}
-    class="pill nodrag nopan flex items-center p-0.5 bg-surface rounded-full transition-all duration-200"
+    class="pill nodrag nopan flex items-center gap-0.5 p-0.5 rounded-[8px] bg-[var(--surface)] border border-[var(--border-color)] transition-colors duration-150"
     class:pill-highlighted={isEdgeActive}
+    class:pill-invalid={!isValid}
     class:pill-dimmed={isDimmed}
     title={tooltipText}
   >
     <!-- Compare button -->
     <button
+      type="button"
       onclick={() => {
         if (sourceNode && targetNode && isValid) {
           diffStore.openDiff(
@@ -134,8 +136,9 @@
         }
       }}
       disabled={!isValid}
-      class="compare-btn group/cmp flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 transition-all duration-150 active:scale-[0.97]"
-      style="color: {isValid ? 'var(--color-primary)' : 'var(--color-text-quaternary)'};"
+      class="compare-btn flex items-center gap-1.5 px-2 py-1 rounded-[6px] text-[11px] font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-45 transition-colors duration-150 outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-active)]"
+      class:compare-btn-active={isValid && isEdgeActive}
+      class:compare-btn-invalid={!isValid}
       title={tooltipText}
     >
       {#if isValid}
@@ -145,62 +148,84 @@
     </button>
 
     <!-- Divider -->
-    <div class="w-px h-3 bg-border mx-0.5 flex-none"></div>
+    <div class="w-px h-3 bg-[var(--line)] mx-0.5 flex-none"></div>
 
     <!-- Delete button -->
-    <button
-      onclick={() => graphStore.deleteEdge(id)}
-      class="delete-btn w-6 h-6 rounded-full grid place-items-center cursor-pointer transition-all duration-150 mr-0.5"
-      aria-label="Delete Edge"
-    >
-      <Trash class="size-3" />
-    </button>
+    <Tooltip>
+      <TooltipTrigger
+        onclick={() => graphStore.deleteEdge(id)}
+        class="delete-btn w-6 h-6 rounded-[6px] grid place-items-center cursor-pointer transition-colors duration-150 outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-active)]"
+        aria-label="Delete Edge"
+      >
+        <Trash class="size-3" />
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={6} class="ui-tooltip-content">
+        Delete
+      </TooltipContent>
+    </Tooltip>
   </div>
 </EdgeLabel>
 
 <style>
-  /* Strip XYFlow's default EdgeLabel background entirely */
   :global(.svelte-flow__edge-label) {
     background: transparent !important;
     padding: 0 !important;
   }
 
   .pill {
-    box-shadow:
-      0 2px 8px var(--color-shadow),
-      0 0 0 0.5px var(--color-border);
+    box-shadow: var(--shadow-xs);
     transition:
-      box-shadow 0.2s ease,
-      transform 0.2s ease,
-      opacity 0.2s ease;
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      opacity 160ms ease;
   }
 
-  .pill:hover,
+  .pill.pill-invalid {
+    border-style: dashed;
+    border-color: var(--border-strong);
+  }
+
+  .pill:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-popover);
+  }
+
   .pill.pill-highlighted {
-    box-shadow:
-      0 4px 18px var(--color-primary-light),
-      0 0 0 1px var(--color-primary);
+    border-color: var(--border-active);
+    box-shadow: var(--shadow-popover);
   }
 
   .pill.pill-dimmed {
     opacity: 0.25;
   }
 
+  .compare-btn {
+    color: var(--ink-secondary);
+  }
+
+  .compare-btn.compare-btn-active {
+    color: var(--ink);
+  }
+
+  .compare-btn.compare-btn-invalid {
+    color: var(--ink-tertiary);
+  }
+
   .compare-btn:hover:not(:disabled) {
-    background-color: var(--color-primary-light);
-    color: var(--color-primary-hover) !important;
+    background-color: var(--hover);
+    color: var(--ink);
   }
 
-  .delete-btn :global(svg) {
-    color: var(--color-text-tertiary);
-    transition: color 0.12s ease;
+  .pill :global(.delete-btn svg) {
+    color: var(--ink-tertiary);
+    transition: color 120ms ease;
   }
 
-  .delete-btn:hover {
-    background-color: var(--color-danger-bg);
+  .pill :global(.delete-btn:hover) {
+    background-color: var(--danger-bg);
   }
 
-  .delete-btn:hover :global(svg) {
-    color: var(--color-danger) !important;
+  .pill :global(.delete-btn:hover svg) {
+    color: var(--danger) !important;
   }
 </style>

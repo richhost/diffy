@@ -1,6 +1,11 @@
 <script lang="ts">
-  import { Dialog } from "@ark-ui/svelte/dialog";
-  import { Portal } from "@ark-ui/svelte/portal";
+  import {
+    Dialog,
+    DialogBackdrop,
+    DialogContent,
+    DialogTitle,
+    DialogClose,
+  } from "@ui-sdk/svelte/dialog";
   import { helpStore } from "~/stores/help.svelte";
   import X from "@tabler/icons-svelte-runes/icons/x";
   import ChevronLeft from "@tabler/icons-svelte-runes/icons/chevron-left";
@@ -35,239 +40,271 @@
   }
 </script>
 
-<Dialog.Root
+<Dialog
   open={helpStore.open}
-  onOpenChange={(e) => {
-    if (!e.open) helpStore.close();
+  presentation="dialog"
+  onOpenChange={(open) => {
+    if (!open) helpStore.close();
   }}
 >
-  <Portal>
-    <!-- Backdrop -->
-    <Dialog.Backdrop
-      class="fixed inset-0 z-40 bg-black/30 dark:bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-200"
-    />
+  <DialogBackdrop class="ui-dialog-backdrop" />
 
-    <Dialog.Positioner
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-    >
-      <Dialog.Content
-        class="w-full max-w-md bg-surface rounded-lg overflow-hidden flex flex-col max-h-[85vh] text-text-primary animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200"
-        style="box-shadow: 0 20px 60px var(--color-shadow), 0 4px 16px rgba(0,0,0,0.06), 0 0 0 0.5px var(--color-border);"
+  <DialogContent
+    class="ui-dialog-content w-[calc(100vw-2rem)] max-w-[440px] max-h-[85vh] overflow-hidden flex flex-col text-[var(--ink)]"
+  >
+    <!-- Header -->
+    <div class="px-5 pt-4 pb-3 flex justify-between items-center flex-none">
+      <DialogTitle class="text-[12px] font-medium text-[var(--ink-tertiary)] tracking-tight">
+        {i18n.t("guideTitle")} · {currentStep + 1} / {totalSteps}
+      </DialogTitle>
+
+      <DialogClose
+        class="w-7 h-7 grid place-items-center rounded-[6px] text-[var(--ink-secondary)] hover:text-[var(--ink)] hover:bg-[var(--hover)] transition-colors cursor-pointer -mr-1 outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-active)]"
+        aria-label="Close"
       >
-        <!-- Header -->
-        <div class="px-6 pt-5 pb-4 flex justify-between items-center flex-none">
-          <Dialog.Title class="text-[13px] font-semibold text-text-secondary tracking-tight uppercase">
-            {i18n.t("guideTitle")} • {currentStep + 1} / {totalSteps}
-          </Dialog.Title>
-          <Dialog.CloseTrigger
-            onclick={handleSkip}
-            class="w-7 h-7 grid place-items-center rounded-full text-text-secondary hover:text-text-primary hover:bg-neutral-bg transition-all cursor-pointer -mr-1 -mt-0.5"
-            aria-label="Close"
-          >
-            <X class="size-4" />
-          </Dialog.CloseTrigger>
-        </div>
+        <X class="size-4" />
+      </DialogClose>
+    </div>
 
-        <!-- Body / Content -->
-        <div class="px-6 pb-6 flex-1 flex flex-col gap-6 items-center text-center">
-          
-          <!-- Step Illustration Frame -->
-          <div class="w-full h-44 bg-neutral-bg rounded-md flex items-center justify-center overflow-hidden border border-border relative select-none">
-            {#if currentStep === 0}
-              <!-- Step 0 Illustration: Add & Edit Nodes -->
-              <div class="flex items-center gap-3 animate-in fade-in duration-300">
-                <div class="w-28 h-24 bg-surface rounded-sm border border-border shadow-sm flex flex-col overflow-hidden relative">
-                  <div class="h-5 bg-neutral-bg border-b border-border px-2 flex items-center justify-between">
-                    <span class="text-[8px] font-bold text-text-primary">{i18n.t("jsonNode")}</span>
-                    <span class="w-2.5 h-2.5 rounded bg-border flex items-center justify-center">
-                      <span class="w-1.5 h-1.5 rounded-full bg-primary-light"></span>
-                    </span>
-                  </div>
-                  <div class="p-2 flex flex-col gap-1 font-mono text-[6px] text-text-tertiary text-left">
-                    <span class="text-primary">"id"</span>
-                    <span class="text-text-primary">"name": "User"</span>
-                  </div>
-                  <div class="absolute inset-0 bg-primary-light border border-primary rounded-sm animate-pulse"></div>
-                </div>
-                <!-- Add Button graphic -->
-                <div class="flex flex-col items-center gap-1.5 bg-surface border border-border shadow-sm p-3 rounded-sm">
-                  <span class="w-7 h-7 rounded-full bg-primary-light flex items-center justify-center text-primary">
-                    ＋
-                  </span>
-                  <span class="text-[9px] font-medium text-text-primary">{i18n.t("addNode")}</span>
-                </div>
-              </div>
-
-            {:else if currentStep === 1}
-              <!-- Step 1 Illustration: Drag to Connect -->
-              <div class="flex items-center justify-between w-full px-12 relative animate-in fade-in duration-300">
-                <!-- Source Node -->
-                <div class="w-20 h-16 bg-surface rounded-sm border border-border shadow-sm flex flex-col overflow-hidden relative">
-                  <div class="h-4 bg-neutral-bg border-b border-border px-1.5 flex items-center">
-                    <span class="text-[7px] font-semibold text-text-primary">{i18n.t("before")}</span>
-                  </div>
-                  <!-- Right Handle -->
-                  <div class="absolute right-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-surface border border-border shadow-sm flex items-center justify-center">
-                    <div class="w-1 h-1 rounded-full bg-primary animate-ping"></div>
-                  </div>
-                </div>
-
-                <!-- Animated Connection Line -->
-                <svg class="absolute inset-0 w-full h-full pointer-events-none z-10">
-                  <path
-                    d="M 124 88 Q 170 88 220 88"
-                    fill="none"
-                    stroke="var(--color-primary)"
-                    stroke-width="1.5"
-                    stroke-dasharray="4"
-                    class="animate-[dash_1s_linear_infinite]"
-                  />
-                </svg>
-
-                <!-- Target Node -->
-                <div class="w-20 h-16 bg-surface rounded-[var(--radius-sm)] border border-border shadow-sm flex flex-col overflow-hidden relative">
-                  <div class="h-4 bg-neutral-bg border-b border-border px-1.5 flex items-center">
-                    <span class="text-[7px] font-semibold text-text-primary">{i18n.t("after")}</span>
-                  </div>
-                  <!-- Left Handle -->
-                  <div class="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-surface border border-border shadow-sm"></div>
-                </div>
-              </div>
-
-            {:else if currentStep === 2}
-              <!-- Step 2 Illustration: Compare Diff -->
-              <div class="flex flex-col items-center gap-3 relative w-full animate-in fade-in duration-300">
-                <div class="flex items-center gap-12 relative">
-                  <div class="w-16 h-12 bg-surface rounded border border-border shadow-sm"></div>
-                  <div class="w-16 h-12 bg-surface rounded border border-border shadow-sm"></div>
-                  
-                  <!-- Connection line with Compare badge -->
-                  <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="w-[120px] h-0.5 bg-border relative flex items-center justify-center">
-                      <span class="bg-primary text-surface text-[7px] font-semibold px-2 py-0.5 rounded-full shadow-md animate-bounce">
-                        {i18n.t("compare")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Mini side-by-side diff preview -->
-                <div class="w-52 h-14 bg-surface border border-border rounded-[var(--radius-sm)] shadow-sm overflow-hidden flex font-mono text-[5px] text-left">
-                  <div class="flex-1 p-1 bg-danger-bg border-r border-border flex flex-col gap-0.5">
-                    <span class="text-danger font-bold">- "role": "viewer"</span>
-                  </div>
-                  <div class="flex-1 p-1 bg-success-bg flex flex-col gap-0.5">
-                    <span class="text-success font-bold">+ "role": "admin"</span>
-                  </div>
-                </div>
-              </div>
-
-            {:else}
-              <!-- Step 3 Illustration: Export/Import -->
-              <div class="flex items-center gap-6 animate-in fade-in duration-300">
-                <div class="flex flex-col items-center gap-1">
-                  <div class="w-10 h-10 rounded-lg bg-surface border border-border shadow-sm flex items-center justify-center text-text-secondary">
-                    ↑
-                  </div>
-                  <span class="text-[8px] font-medium text-text-secondary">{i18n.t("import")}</span>
-                </div>
-                <div class="w-16 h-20 bg-surface border border-border rounded shadow-sm flex flex-col items-center justify-center gap-1.5 relative">
-                  <span class="text-[12px] font-bold text-text-primary">JSON</span>
-                  <div class="w-8 h-1 bg-neutral-bg rounded"></div>
-                  <div class="w-6 h-1 bg-neutral-bg rounded"></div>
-                </div>
-                <div class="flex flex-col items-center gap-1">
-                  <div class="w-10 h-10 rounded-lg bg-primary-light border border-primary/20 shadow-sm flex items-center justify-center text-primary font-bold">
-                    ↓
-                  </div>
-                  <span class="text-[8px] font-medium text-primary">{i18n.t("export")}</span>
-                </div>
-              </div>
-            {/if}
-          </div>
-
-          <!-- Step Description -->
-          <div class="flex flex-col gap-2">
-            {#if currentStep === 0}
-              <h2 class="text-base font-semibold text-text-primary tracking-tight">
-                {i18n.t("step0Title")}
-              </h2>
-              <p class="text-[13px] text-text-secondary leading-relaxed max-w-xs">
-                {i18n.t("step0Desc")}
-              </p>
-            {:else if currentStep === 1}
-              <h2 class="text-base font-semibold text-text-primary tracking-tight">
-                {i18n.t("step1Title")}
-              </h2>
-              <p class="text-[13px] text-text-secondary leading-relaxed max-w-xs">
-                {i18n.t("step1Desc")}
-              </p>
-            {:else if currentStep === 2}
-              <h2 class="text-base font-semibold text-text-primary tracking-tight">
-                {i18n.t("step2Title")}
-              </h2>
-              <p class="text-[13px] text-text-secondary leading-relaxed max-w-xs">
-                {i18n.t("step2Desc")}
-              </p>
-            {:else}
-              <h2 class="text-base font-semibold text-text-primary tracking-tight">
-                {i18n.t("step3Title")}
-              </h2>
-              <p class="text-[13px] text-text-secondary leading-relaxed max-w-xs">
-                {i18n.t("step3Desc")}
-              </p>
-            {/if}
-          </div>
-
-          <!-- Progress dot indicators -->
-          <div class="flex items-center gap-1.5 mt-2 flex-none">
-            {#each Array(totalSteps) as _, i}
-              <button
-                onclick={() => (currentStep = i)}
-                class="w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer {currentStep === i ? 'w-4 bg-primary' : 'bg-text-quaternary'}"
-                aria-label="Go to slide {i + 1}"
-              ></button>
-            {/each}
-          </div>
-        </div>
-
-        <!-- Footer / Navigation -->
-        <div class="px-6 pb-5 flex items-center justify-between border-t border-border pt-4 flex-none">
-          <button
-            onclick={handleSkip}
-            class="text-[12px] font-medium text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
-          >
-            {i18n.t("skip")}
-          </button>
-          
-          <div class="flex items-center gap-2">
-            {#if currentStep > 0}
-              <button
-                onclick={handlePrev}
-                class="w-8 h-8 rounded-lg bg-neutral-bg hover:bg-border text-text-primary flex items-center justify-center transition-all cursor-pointer"
-                aria-label="Previous step"
-              >
-                <ChevronLeft class="size-4" />
-              </button>
-            {/if}
-            <button
-              onclick={handleNext}
-              class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[12px] font-medium text-white transition-all cursor-pointer hover:opacity-90 active:scale-[0.98]"
-              style="background: var(--color-primary);"
+    <!-- Body / Content -->
+    <div class="px-5 pb-5 flex-1 flex flex-col gap-5 items-center text-center">
+      <!-- Step Illustration Frame -->
+      <div
+        class="w-full h-44 rounded-[8px] flex items-center justify-center overflow-hidden border border-[var(--border-color)] relative select-none"
+        style="background-color: var(--ground); background-image: radial-gradient(var(--canvas-dot) 1px, transparent 1px); background-size: 16px 16px;"
+      >
+        {#if currentStep === 0}
+          <!-- Step 0 Illustration: Add & Edit Nodes -->
+          <div class="flex items-center gap-3 animate-in fade-in duration-200">
+            <div
+              class="w-30 h-22 bg-[var(--surface)] border border-[var(--border-strong)] shadow-[var(--shadow-card)] rounded-[8px] flex flex-col overflow-hidden relative"
             >
-              {#if currentStep === totalSteps - 1}
-                {i18n.t("getStarted")}
-              {:else}
-                {i18n.t("next")}
-                <ChevronRight class="size-3.5" />
-              {/if}
-            </button>
+              <div class="px-2.5 py-1.5 border-b border-[var(--line)] flex items-center justify-between">
+                <span class="text-[8.5px] font-medium text-[var(--ink)]">
+                  {i18n.t("jsonNode")}
+                </span>
+                <span class="w-1.5 h-1.5 rounded-full bg-[var(--ink)]"></span>
+              </div>
+              <div
+                class="p-2 flex-1 bg-[var(--surface-subtle)] flex flex-col gap-1 font-mono text-[7px] text-[var(--ink-tertiary)] text-left"
+              >
+                <span class="text-[var(--ink-secondary)]">"id": "usr_9k2m"</span>
+                <span>"name": "Ada"</span>
+              </div>
+            </div>
+            <!-- Add Button graphic -->
+            <div
+              class="flex flex-col items-center gap-1 bg-[var(--surface)] border border-[var(--border-color)] shadow-[var(--shadow-xs)] p-2.5 rounded-[8px]"
+            >
+              <span
+                class="w-6 h-6 rounded-[6px] bg-[var(--ink)] text-[var(--on-ink)] flex items-center justify-center font-medium text-xs"
+              >
+                +
+              </span>
+              <span class="text-[9px] font-medium text-[var(--ink-secondary)]">
+                {i18n.t("addNode")}
+              </span>
+            </div>
           </div>
-        </div>
-      </Dialog.Content>
-    </Dialog.Positioner>
-  </Portal>
-</Dialog.Root>
+        {:else if currentStep === 1}
+          <!-- Step 1 Illustration: Drag to Connect -->
+          <div
+            class="flex items-center justify-between w-full px-11 relative animate-in fade-in duration-200"
+          >
+            <!-- Source Node -->
+            <div
+              class="w-22 h-15 bg-[var(--surface)] border border-[var(--border-color)] shadow-[var(--shadow-card)] rounded-[8px] flex flex-col overflow-hidden relative z-10"
+            >
+              <div class="px-2 py-1 border-b border-[var(--line)] flex items-center">
+                <span class="text-[8px] font-medium text-[var(--ink)]">
+                  {i18n.t("before")}
+                </span>
+              </div>
+              <div class="flex-1 bg-[var(--surface-subtle)]"></div>
+              <div
+                class="absolute right-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[var(--ink)]"
+              ></div>
+            </div>
+
+            <!-- Animated Connection Line -->
+            <svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
+              <path
+                d="M 130 88 Q 196 88 262 88"
+                fill="none"
+                stroke="var(--edge-stroke-active)"
+                stroke-width="1.5"
+                stroke-dasharray="4"
+                class="animate-[dash_1s_linear_infinite]"
+              />
+            </svg>
+
+            <!-- Target Node -->
+            <div
+              class="w-22 h-15 bg-[var(--surface)] border border-[var(--border-strong)] shadow-[var(--shadow-card)] rounded-[8px] flex flex-col overflow-hidden relative z-10"
+            >
+              <div class="px-2 py-1 border-b border-[var(--line)] flex items-center">
+                <span class="text-[8px] font-medium text-[var(--ink)]">
+                  {i18n.t("after")}
+                </span>
+              </div>
+              <div class="flex-1 bg-[var(--surface-subtle)]"></div>
+              <div
+                class="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[var(--surface)] border-[1.5px] border-[var(--edge-stroke-active)]"
+              ></div>
+            </div>
+          </div>
+        {:else if currentStep === 2}
+          <!-- Step 2 Illustration: Compare Diff -->
+          <div class="flex flex-col items-center gap-3 relative w-full animate-in fade-in duration-200">
+            <div class="flex items-center gap-14 relative">
+              <div class="w-16 h-11 bg-[var(--surface)] border border-[var(--border-color)] shadow-[var(--shadow-xs)] rounded-[8px]"></div>
+              <div class="w-16 h-11 bg-[var(--surface)] border border-[var(--border-strong)] shadow-[var(--shadow-xs)] rounded-[8px]"></div>
+
+              <!-- Connection line with Compare badge -->
+              <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="w-[120px] h-px bg-[var(--edge-stroke-active)] relative flex items-center justify-center">
+                  <span
+                    class="bg-[var(--surface)] border border-[var(--border-strong)] shadow-[var(--shadow-xs)] text-[var(--ink)] text-[8px] font-medium px-2 py-0.5 rounded-[6px]"
+                  >
+                    {i18n.t("compare")}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mini side-by-side diff preview -->
+            <div
+              class="w-56 h-12 bg-[var(--surface)] border border-[var(--border-color)] shadow-[var(--shadow-card)] rounded-[8px] overflow-hidden flex font-mono text-[6.5px] text-left"
+            >
+              <div
+                class="flex-1 p-1.5 bg-[var(--danger-bg)] border-r border-[var(--line)] flex flex-col justify-center"
+              >
+                <span class="text-[var(--danger)] font-medium">- "role": "viewer"</span>
+              </div>
+              <div class="flex-1 p-1.5 bg-[var(--success-bg)] flex flex-col justify-center">
+                <span class="text-[var(--success)] font-medium">+ "role": "admin"</span>
+              </div>
+            </div>
+          </div>
+        {:else}
+          <!-- Step 3 Illustration: Export/Import -->
+          <div class="flex items-center gap-5 animate-in fade-in duration-200">
+            <div class="flex flex-col items-center gap-1.5">
+              <div
+                class="w-9 h-9 rounded-[8px] bg-[var(--surface)] border border-[var(--border-color)] shadow-[var(--shadow-xs)] flex items-center justify-center text-[var(--ink-secondary)] text-xs"
+              >
+                ↑
+              </div>
+              <span class="text-[8.5px] font-medium text-[var(--ink-tertiary)]">
+                {i18n.t("import")}
+              </span>
+            </div>
+            <div
+              class="w-16 h-19 bg-[var(--surface)] border border-[var(--border-strong)] shadow-[var(--shadow-card)] rounded-[8px] flex flex-col items-center justify-center gap-1.5"
+            >
+              <span class="text-[10.5px] font-medium font-mono text-[var(--ink)]">JSON</span>
+              <div class="w-8 h-1 bg-[var(--surface-subtle)] rounded-full"></div>
+              <div class="w-6 h-1 bg-[var(--surface-subtle)] rounded-full"></div>
+            </div>
+            <div class="flex flex-col items-center gap-1.5">
+              <div
+                class="w-9 h-9 rounded-[8px] bg-[var(--surface)] border border-[var(--border-color)] shadow-[var(--shadow-xs)] flex items-center justify-center text-[var(--ink)] font-medium text-xs"
+              >
+                ↓
+              </div>
+              <span class="text-[8.5px] font-medium text-[var(--ink-secondary)]">
+                {i18n.t("export")}
+              </span>
+            </div>
+          </div>
+        {/if}
+      </div>
+
+      <!-- Step Description -->
+      <div class="flex flex-col gap-1.5">
+        {#if currentStep === 0}
+          <h2 class="text-[15px] font-medium text-[var(--ink)] tracking-tight">
+            {i18n.t("step0Title")}
+          </h2>
+          <p class="text-[12.5px] text-[var(--ink-secondary)] leading-relaxed max-w-xs">
+            {i18n.t("step0Desc")}
+          </p>
+        {:else if currentStep === 1}
+          <h2 class="text-[15px] font-medium text-[var(--ink)] tracking-tight">
+            {i18n.t("step1Title")}
+          </h2>
+          <p class="text-[12.5px] text-[var(--ink-secondary)] leading-relaxed max-w-xs">
+            {i18n.t("step1Desc")}
+          </p>
+        {:else if currentStep === 2}
+          <h2 class="text-[15px] font-medium text-[var(--ink)] tracking-tight">
+            {i18n.t("step2Title")}
+          </h2>
+          <p class="text-[12.5px] text-[var(--ink-secondary)] leading-relaxed max-w-xs">
+            {i18n.t("step2Desc")}
+          </p>
+        {:else}
+          <h2 class="text-[15px] font-medium text-[var(--ink)] tracking-tight">
+            {i18n.t("step3Title")}
+          </h2>
+          <p class="text-[12.5px] text-[var(--ink-secondary)] leading-relaxed max-w-xs">
+            {i18n.t("step3Desc")}
+          </p>
+        {/if}
+      </div>
+
+      <!-- Progress dot indicators -->
+      <div class="flex items-center gap-1.5 flex-none">
+        {#each Array(totalSteps) as _, i}
+          <button
+            type="button"
+            onclick={() => (currentStep = i)}
+            class="h-1 rounded-full transition-all duration-200 cursor-pointer {currentStep === i
+              ? 'w-4 bg-[var(--ink)]'
+              : 'w-1.5 bg-[var(--border-strong)] hover:bg-[var(--ink-tertiary)]'}"
+            aria-label="Go to slide {i + 1}"
+          ></button>
+        {/each}
+      </div>
+    </div>
+
+    <!-- Footer / Navigation -->
+    <div class="px-5 py-3.5 flex items-center justify-between border-t border-[var(--line)] flex-none">
+      <button
+        type="button"
+        onclick={handleSkip}
+        class="text-[12px] font-medium text-[var(--ink-tertiary)] hover:text-[var(--ink)] transition-colors cursor-pointer"
+      >
+        {i18n.t("skip")}
+      </button>
+
+      <div class="flex items-center gap-2">
+        {#if currentStep > 0}
+          <button
+            type="button"
+            onclick={handlePrev}
+            class="w-7 h-7 rounded-[8px] bg-[var(--surface)] border border-[var(--border-color)] shadow-[var(--shadow-xs)] hover:border-[var(--border-strong)] hover:bg-[var(--hover)] text-[var(--ink)] flex items-center justify-center transition-colors cursor-pointer"
+            aria-label="Previous step"
+          >
+            <ChevronLeft class="size-3.5" />
+          </button>
+        {/if}
+        <button
+          type="button"
+          onclick={handleNext}
+          class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[8px] border border-transparent text-[12px] font-medium bg-[var(--ink)] text-[var(--on-ink)] shadow-[var(--shadow-xs)] hover:opacity-88 transition-opacity cursor-pointer"
+        >
+          {#if currentStep === totalSteps - 1}
+            {i18n.t("getStarted")}
+          {:else}
+            {i18n.t("next")}
+            <ChevronRight class="size-3.5" />
+          {/if}
+        </button>
+      </div>
+    </div>
+  </DialogContent>
+</Dialog>
 
 <style>
   @keyframes dash {

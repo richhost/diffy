@@ -52,6 +52,10 @@ class ThemeStore {
     }
   }
 
+  toggle() {
+    return this.setMode(this.isDark ? "light" : "dark");
+  }
+
   private applyTheme() {
     if (typeof document === "undefined") return;
     const dark = this.isDark;

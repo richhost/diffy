@@ -191,7 +191,7 @@ class GraphStore {
         id,
         type: "json",
         position,
-        data: { label: `Node ${id}`, json: "{}" },
+        data: { label: `Node ${id}`, json: "" },
       },
     ];
     this.persist();

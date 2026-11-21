@@ -1,19 +1,9 @@
 <script lang="ts">
   import Loader4 from "@tabler/icons-svelte-runes/icons/loader-4";
   import X from "@tabler/icons-svelte-runes/icons/x";
-  import { graphStore } from "~/stores/graph.svelte";
-  import { i18n } from "~/stores/i18n.svelte";
-  import { themeStore } from "~/stores/theme.svelte";
-  import {
-    SvelteFlow,
-    Background,
-    MiniMap,
-    Controls,
-    Panel,
-    addEdge,
-  } from "@xyflow/svelte";
-  import type { Connection } from "@xyflow/svelte";
-  import "@xyflow/svelte/dist/style.css";
+  import Check from "@tabler/icons-svelte-runes/icons/check";
+  import ChevronRight from "@tabler/icons-svelte-runes/icons/chevron-right";
+  import World from "@tabler/icons-svelte-runes/icons/world";
   import Plus from "@tabler/icons-svelte-runes/icons/plus";
   import Wand from "@tabler/icons-svelte-runes/icons/wand";
   import Download from "@tabler/icons-svelte-runes/icons/download";
@@ -21,13 +11,45 @@
   import Sun from "@tabler/icons-svelte-runes/icons/sun";
   import Moon from "@tabler/icons-svelte-runes/icons/moon";
   import DeviceDesktop from "@tabler/icons-svelte-runes/icons/device-desktop";
+  import HelpCircle from "@tabler/icons-svelte-runes/icons/help-circle";
+  import Menu2 from "@tabler/icons-svelte-runes/icons/menu-2";
+  import { graphStore, type JasonNode } from "~/stores/graph.svelte";
+  import { i18n } from "~/stores/i18n.svelte";
+  import { themeStore, type ThemeMode } from "~/stores/theme.svelte";
+  import { helpStore } from "~/stores/help.svelte";
+  import {
+    SvelteFlow,
+    Background,
+    MiniMap,
+    Controls,
+    Panel,
+  } from "@xyflow/svelte";
+  import type {
+    Connection,
+    Edge,
+    EdgeChangeset,
+    NodeChangeset,
+  } from "@xyflow/svelte";
+  import {
+    Menu,
+    MenuTrigger,
+    MenuContent,
+    MenuItem,
+    MenuSeparator,
+    MenuSub,
+    MenuSubTrigger,
+    MenuSubContent,
+    MenuRadioGroup,
+    MenuRadioItem,
+    MenuItemIndicator,
+  } from "@ui-sdk/svelte/menu";
+  import { Tooltip, TooltipTrigger, TooltipContent } from "@ui-sdk/svelte/tooltip";
+  import ThemeToggle from "~/components/theme-toggle.svelte";
   import JsonNode from "~/components/json-node.svelte";
   import DiffEdge from "~/components/diff-edge.svelte";
   import JsonEditorDialog from "@/components/json-editor-dialog.svelte";
   import JsonDiffDialog from "@/components/json-diff-dialog.svelte";
-  import { helpStore } from "~/stores/help.svelte";
   import HelpDialog from "@/components/help-dialog.svelte";
-  import HelpCircle from "@tabler/icons-svelte-runes/icons/help-circle";
 
   const nodeTypes = { json: JsonNode };
   const edgeTypes = { diff: DiffEdge };
@@ -40,6 +62,22 @@
   });
 
   const isEmpty = $derived(graphStore.nodes.length === 0);
+
+  const themeLabel = $derived(
+    themeStore.mode === "dark"
+      ? i18n.t("themeDark")
+      : themeStore.mode === "light"
+        ? i18n.t("themeLight")
+        : i18n.t("themeSystem"),
+  );
+
+  const localeLabels: Record<string, string> = {
+    en: "English",
+    "zh-CN": "简体中文",
+    "zh-TW": "繁體中文",
+    ja: "日本語",
+  };
+  const localeLabel = $derived(localeLabels[i18n.locale] ?? "English");
 
   let viewport = $state({ x: 0, y: 0, zoom: 1 });
   let spawnCount = 0;
@@ -82,159 +120,275 @@
     };
     input.click();
   }
-  function handleConnect(connection: Connection) {
-    graphStore.setEdges(
-      addEdge(
-        { ...connection, type: "diff", animated: true },
-        graphStore.edges,
-      ),
-    );
+
+  function handleBeforeConnect(connection: Connection): Edge {
+    return {
+      ...connection,
+      id: `xy-edge__${connection.source}${connection.sourceHandle ?? ""}-${connection.target}${connection.targetHandle ?? ""}`,
+      type: "diff",
+      animated: true,
+    };
   }
-  function handleNodeDragStop() {
-    graphStore.setNodes(graphStore.nodes);
+
+  function handleNodesChange(changes: NodeChangeset<JasonNode>) {
+    const nextNodes = changes.applyTo(graphStore.nodes);
+    const hasFinalMove = changes
+      .getByType("position")
+      .some((change) => change.dragging === false);
+    const hasStructuralChange =
+      changes.getByType("add").length > 0 ||
+      changes.getByType("remove").length > 0 ||
+      changes.getByType("replace").length > 0;
+
+    changes.clear();
+    if (hasFinalMove || hasStructuralChange) {
+      graphStore.setNodes(nextNodes);
+    } else {
+      graphStore.nodes = nextNodes;
+    }
+  }
+
+  function handleEdgesChange(changes: EdgeChangeset<Edge>) {
+    const nextEdges = changes.applyTo(graphStore.edges);
+    const shouldPersist =
+      changes.getByType("add").length > 0 ||
+      changes.getByType("remove").length > 0 ||
+      changes.getByType("replace").length > 0;
+
+    changes.clear();
+    if (shouldPersist) {
+      graphStore.setEdges(nextEdges);
+    } else {
+      graphStore.edges = nextEdges;
+    }
   }
 </script>
 
-<div class="w-screen h-screen">
+<div class="w-screen h-screen bg-[var(--ground)]">
   {#if graphStore.loading}
     <div class="absolute inset-0 pointer-events-none grid place-items-center">
-      <Loader4 class="size-5 animate-spin text-[#aeaeb2]" />
+      <Loader4 class="size-5 animate-spin text-[var(--ink-tertiary)]" />
     </div>
   {:else}
     <SvelteFlow
       proOptions={{ hideAttribution: true }}
-      colorMode={themeStore.resolvedTheme}
+      forceColorMode={themeStore.resolvedTheme}
       bind:nodes={graphStore.nodes}
       bind:edges={graphStore.edges}
       bind:viewport
       {nodeTypes}
       {edgeTypes}
-      onconnect={handleConnect}
-      onnodedragstop={handleNodeDragStop}
+      onbeforeconnect={handleBeforeConnect}
+      onnodeschange={handleNodesChange}
+      onedgeschange={handleEdgesChange}
       fitView
-      fitViewOptions={{ maxZoom: 1.0, padding: 0.1 }}
+      fitViewOptions={{ maxZoom: 1.0, padding: "5%" }}
       defaultEdgeOptions={{ type: "diff", animated: true }}
     >
-      <Background
-        gap={24}
-        size={1}
-        patternColor={themeStore.isDark ? "#1f2430" : "#d4d4d8"}
-      />
-      <MiniMap />
-      <Controls />
+      <Background gap={24} size={1} patternColor="var(--canvas-dot)" />
+      <MiniMap nodeBorderRadius={4} />
+      <Controls orientation="horizontal" />
 
-      <!-- Toolbar pill -->
+      <!-- Top-Left: Primary Canvas Actions -->
       <Panel position="top-left" class="mt-4 ml-4">
-        <div
-          class="flex items-center bg-surface rounded-md shadow-[0_2px_8px_var(--color-shadow),0_0_0_0.5px_var(--color-border)] overflow-hidden transition-colors duration-150"
-        >
+        <div class="flex items-center gap-2">
           <button
+            type="button"
             onclick={handleAddNode}
-            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
+            class="h-8 px-3 rounded-[8px] bg-[var(--ink)] text-[var(--on-ink)] border border-transparent shadow-[var(--shadow-xs)] hover:opacity-88 transition-opacity duration-150 flex items-center gap-1.5 text-[12px] font-medium cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-active)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ground)]"
           >
-            <Plus class="size-3.5 text-[var(--color-primary)]" />
-            {i18n.t("addNode")}
+            <Plus class="size-3.5" />
+            <span>{i18n.t("addNode")}</span>
           </button>
-          <div class="w-px h-4 bg-[var(--color-border)]"></div>
-          <button
-            onclick={() => graphStore.autoLayout()}
-            disabled={graphStore.nodes.length === 0}
-            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
-            title={i18n.t("autoLayout")}
-          >
-            <Wand class="size-3.5 text-[var(--color-text-secondary)]" />
-            {i18n.t("autoLayout")}
-          </button>
-          <div class="w-px h-4 bg-[var(--color-border)]"></div>
-          <button
-            onclick={handleImport}
-            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
-          >
-            <Upload class="size-3.5 text-[var(--color-text-secondary)]" />
-            {i18n.t("import")}
-          </button>
-          <div class="w-px h-4 bg-[var(--color-border)]"></div>
-          <button
-            onclick={handleExport}
-            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
-          >
-            <Download class="size-3.5 text-[var(--color-text-secondary)]" />
-            {i18n.t("export")}
-          </button>
-          <div class="w-px h-4 bg-[var(--color-border)]"></div>
-          <button
-            onclick={() => helpStore.openHelp()}
-            class="flex items-center gap-1.5 px-4 py-2 text-[var(--color-text-primary)] hover:bg-[var(--color-neutral-bg)] transition-colors duration-150 cursor-pointer text-[12px] font-medium tracking-tight"
-          >
-            <HelpCircle class="size-3.5 text-[var(--color-text-secondary)]" />
-            {i18n.t("help")}
-          </button>
-          <div class="w-px h-4 bg-[var(--color-border)]"></div>
 
-          <!-- Theme switcher -->
-          <div class="relative flex items-center pr-3">
-            <div class="pl-3 pointer-events-none flex items-center text-[var(--color-text-secondary)]">
-              {#if themeStore.mode === "dark"}
-                <Moon class="size-3.5" />
-              {:else if themeStore.mode === "light"}
-                <Sun class="size-3.5" />
-              {:else}
-                <DeviceDesktop class="size-3.5" />
-              {/if}
-            </div>
-            <select
-              value={themeStore.mode}
-              onchange={(e) => themeStore.setMode((e.target as HTMLSelectElement).value as any)}
-              class="appearance-none bg-transparent pl-2 pr-6 py-2 text-[12px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] outline-none cursor-pointer transition-colors duration-150"
-              aria-label={i18n.t("theme")}
+          <Tooltip>
+            <TooltipTrigger
+              onclick={() => {
+                if (!isEmpty) graphStore.autoLayout();
+              }}
+              aria-disabled={isEmpty || undefined}
+              aria-label={i18n.t("autoLayout")}
+              class="h-8 w-8 grid place-items-center rounded-[8px] border border-[var(--border-color)] bg-[var(--surface)] shadow-[var(--shadow-xs)] text-[var(--ink-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--ink)] hover:bg-[var(--hover)] aria-disabled:opacity-35 aria-disabled:cursor-not-allowed aria-disabled:hover:border-[var(--border-color)] aria-disabled:hover:text-[var(--ink-secondary)] aria-disabled:hover:bg-[var(--surface)] transition-colors duration-150 cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-active)]"
             >
-              <option value="system">{i18n.t("themeSystem")}</option>
-              <option value="light">{i18n.t("themeLight")}</option>
-              <option value="dark">{i18n.t("themeDark")}</option>
-            </select>
-            <svg
-              class="size-3 text-[var(--color-text-tertiary)] absolute right-2 pointer-events-none"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-            </svg>
-          </div>
+              <Wand class="size-3.5" />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={8} class="ui-tooltip-content">
+              {i18n.t("autoLayout")}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </Panel>
 
-          <div class="w-px h-4 bg-[var(--color-border)]"></div>
+      <!-- Top-Right: Animated Theme Toggle & Workspace Menu -->
+      <Panel position="top-right" class="mt-4 mr-4">
+        <div class="flex items-center gap-1.5">
+          <Tooltip>
+            <TooltipTrigger
+              onclick={() => themeStore.toggle()}
+              aria-label={themeStore.isDark ? i18n.t("themeLight") : i18n.t("themeDark")}
+              class="w-8 h-8 grid place-items-center rounded-[8px] border border-[var(--border-color)] bg-[var(--surface)] shadow-[var(--shadow-xs)] text-[var(--ink)] hover:border-[var(--border-strong)] hover:bg-[var(--hover)] transition-colors duration-150 cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-active)]"
+            >
+              <ThemeToggle toggled={themeStore.isDark} class="text-[15px]" />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={8} class="ui-tooltip-content">
+              {themeStore.isDark ? i18n.t("themeLight") : i18n.t("themeDark")}
+            </TooltipContent>
+          </Tooltip>
 
-          <!-- Language switcher -->
-          <div class="relative flex items-center pr-3">
-            <select
-              value={i18n.locale}
-              onchange={(e) => i18n.setLocale((e.target as HTMLSelectElement).value as any)}
-              class="appearance-none bg-transparent pl-3 pr-6 py-2 text-[12px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] outline-none cursor-pointer transition-colors duration-150"
+          <Menu>
+            <MenuTrigger
+              aria-label="Menu"
+              class="w-8 h-8 grid place-items-center rounded-[8px] border border-[var(--border-color)] bg-[var(--surface)] shadow-[var(--shadow-xs)] text-[var(--ink)] hover:border-[var(--border-strong)] hover:bg-[var(--hover)] data-[open]:border-[var(--border-strong)] data-[open]:bg-[var(--hover)] transition-colors duration-150 cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-active)]"
             >
-              <option value="en">English</option>
-              <option value="zh-CN">简体中文</option>
-              <option value="zh-TW">繁體中文</option>
-              <option value="ja">日本語</option>
-            </select>
-            <svg
-              class="size-3 text-[var(--color-text-tertiary)] absolute right-2 pointer-events-none"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-            </svg>
-          </div>
+              <Menu2 class="size-4" />
+            </MenuTrigger>
+
+            <MenuContent side="bottom" align="end" sideOffset={6} class="ui-menu-content">
+              <MenuItem value="import" onSelect={handleImport} class="ui-menu-item">
+                <div class="flex items-center gap-2">
+                  <Upload class="size-3.5 text-[var(--ink-secondary)]" />
+                  <span>{i18n.t("import")}</span>
+                </div>
+              </MenuItem>
+              <MenuItem value="export" onSelect={handleExport} class="ui-menu-item">
+                <div class="flex items-center gap-2">
+                  <Download class="size-3.5 text-[var(--ink-secondary)]" />
+                  <span>{i18n.t("export")}</span>
+                </div>
+              </MenuItem>
+
+              <MenuSeparator class="ui-menu-separator" />
+
+              <MenuSub>
+                <MenuSubTrigger class="ui-menu-item">
+                  <div class="flex items-center gap-2">
+                    {#if themeStore.mode === "dark"}
+                      <Moon class="size-3.5 text-[var(--ink-secondary)]" />
+                    {:else if themeStore.mode === "light"}
+                      <Sun class="size-3.5 text-[var(--ink-secondary)]" />
+                    {:else}
+                      <DeviceDesktop class="size-3.5 text-[var(--ink-secondary)]" />
+                    {/if}
+                    <span>{i18n.t("theme")}</span>
+                  </div>
+                  <div class="flex items-center gap-1 text-[var(--ink-tertiary)]">
+                    <span class="text-[11px]">{themeLabel}</span>
+                    <ChevronRight class="size-3" />
+                  </div>
+                </MenuSubTrigger>
+                <MenuSubContent sideOffset={4} class="ui-menu-content">
+                  <MenuRadioGroup
+                    name="theme"
+                    value={themeStore.mode}
+                    onValueChange={(v) => {
+                      if (v) themeStore.setMode(v as ThemeMode);
+                    }}
+                  >
+                    <MenuRadioItem
+                      value="system"
+                      label={i18n.t("themeSystem")}
+                      class="ui-menu-item"
+                    >
+                      <div class="flex items-center gap-2">
+                        <DeviceDesktop class="size-3.5 text-[var(--ink-secondary)]" />
+                        <span>{i18n.t("themeSystem")}</span>
+                      </div>
+                      <MenuItemIndicator>
+                        <Check class="size-3.5 text-[var(--ink)]" />
+                      </MenuItemIndicator>
+                    </MenuRadioItem>
+                    <MenuRadioItem
+                      value="light"
+                      label={i18n.t("themeLight")}
+                      class="ui-menu-item"
+                    >
+                      <div class="flex items-center gap-2">
+                        <Sun class="size-3.5 text-[var(--ink-secondary)]" />
+                        <span>{i18n.t("themeLight")}</span>
+                      </div>
+                      <MenuItemIndicator>
+                        <Check class="size-3.5 text-[var(--ink)]" />
+                      </MenuItemIndicator>
+                    </MenuRadioItem>
+                    <MenuRadioItem
+                      value="dark"
+                      label={i18n.t("themeDark")}
+                      class="ui-menu-item"
+                    >
+                      <div class="flex items-center gap-2">
+                        <Moon class="size-3.5 text-[var(--ink-secondary)]" />
+                        <span>{i18n.t("themeDark")}</span>
+                      </div>
+                      <MenuItemIndicator>
+                        <Check class="size-3.5 text-[var(--ink)]" />
+                      </MenuItemIndicator>
+                    </MenuRadioItem>
+                  </MenuRadioGroup>
+                </MenuSubContent>
+              </MenuSub>
+
+              <MenuSub>
+                <MenuSubTrigger class="ui-menu-item">
+                  <div class="flex items-center gap-2">
+                    <World class="size-3.5 text-[var(--ink-secondary)]" />
+                    <span>{localeLabel}</span>
+                  </div>
+                  <ChevronRight class="size-3 text-[var(--ink-tertiary)]" />
+                </MenuSubTrigger>
+                <MenuSubContent sideOffset={4} class="ui-menu-content">
+                  <MenuRadioGroup
+                    name="locale"
+                    value={i18n.locale}
+                    onValueChange={(v) => {
+                      if (v) i18n.setLocale(v as any);
+                    }}
+                  >
+                    <MenuRadioItem value="en" label="English" class="ui-menu-item">
+                      <span>English</span>
+                      <MenuItemIndicator>
+                        <Check class="size-3.5 text-[var(--ink)]" />
+                      </MenuItemIndicator>
+                    </MenuRadioItem>
+                    <MenuRadioItem value="zh-CN" label="简体中文" class="ui-menu-item">
+                      <span>简体中文</span>
+                      <MenuItemIndicator>
+                        <Check class="size-3.5 text-[var(--ink)]" />
+                      </MenuItemIndicator>
+                    </MenuRadioItem>
+                    <MenuRadioItem value="zh-TW" label="繁體中文" class="ui-menu-item">
+                      <span>繁體中文</span>
+                      <MenuItemIndicator>
+                        <Check class="size-3.5 text-[var(--ink)]" />
+                      </MenuItemIndicator>
+                    </MenuRadioItem>
+                    <MenuRadioItem value="ja" label="日本語" class="ui-menu-item">
+                      <span>日本語</span>
+                      <MenuItemIndicator>
+                        <Check class="size-3.5 text-[var(--ink)]" />
+                      </MenuItemIndicator>
+                    </MenuRadioItem>
+                  </MenuRadioGroup>
+                </MenuSubContent>
+              </MenuSub>
+
+              <MenuSeparator class="ui-menu-separator" />
+
+              <MenuItem value="help" onSelect={() => helpStore.openHelp()} class="ui-menu-item">
+                <div class="flex items-center gap-2">
+                  <HelpCircle class="size-3.5 text-[var(--ink-secondary)]" />
+                  <span>{i18n.t("help")}</span>
+                </div>
+              </MenuItem>
+            </MenuContent>
+          </Menu>
         </div>
       </Panel>
 
       {#if isEmpty}
         <div
-          class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-500"
+          class="pointer-events-none absolute inset-0 flex items-center justify-center p-6 animate-in fade-in duration-300"
         >
-          <p class="text-[13px] text-[var(--color-text-secondary)] text-center leading-relaxed max-w-sm px-4">
+          <p class="text-[13px] text-[var(--ink-tertiary)] text-center leading-relaxed max-w-sm">
             {i18n.t("emptyState")}
           </p>
         </div>
@@ -242,25 +396,28 @@
     </SvelteFlow>
   {/if}
 </div>
+
 <JsonEditorDialog />
 <JsonDiffDialog />
 <HelpDialog />
 
 {#if graphStore.showUndoToast}
   <div
-    class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 bg-text-primary text-surface rounded-[var(--radius-md)] shadow-[0_4px_16px_var(--color-shadow),0_0_0_0.5px_var(--color-border)] animate-in fade-in slide-in-from-bottom-4 duration-200"
+    class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-3.5 py-2 rounded-[8px] bg-[var(--tooltip-bg)] text-[var(--tooltip-fg)] border border-[var(--tooltip-border)] shadow-[var(--shadow-popover)] animate-in fade-in slide-in-from-bottom-2 duration-150"
   >
     <span class="text-[12px] font-medium tracking-tight">{i18n.t("nodeDeleted")}</span>
-    <div class="w-px h-3 bg-surface opacity-20"></div>
+    <div class="w-px h-3 bg-[var(--tooltip-fg)] opacity-25"></div>
     <button
+      type="button"
       onclick={() => graphStore.restoreLastDeleted()}
-      class="text-[12px] font-bold text-primary hover:underline cursor-pointer transition-colors duration-150"
+      class="text-[12px] font-semibold underline underline-offset-2 hover:opacity-80 cursor-pointer transition-opacity duration-150"
     >
       {i18n.t("undo")}
     </button>
     <button
+      type="button"
       onclick={() => graphStore.dismissUndoToast()}
-      class="text-text-tertiary hover:text-surface ml-1 cursor-pointer transition-colors duration-150 p-0.5 rounded-full hover:bg-surface/10"
+      class="w-5 h-5 rounded-[4px] grid place-items-center opacity-70 hover:opacity-100 cursor-pointer transition-opacity duration-150"
       aria-label="Dismiss"
     >
       <X class="size-3" />

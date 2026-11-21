@@ -3,16 +3,27 @@
   import Trash from "@tabler/icons-svelte-runes/icons/trash";
   import Code from "@tabler/icons-svelte-runes/icons/code";
   import type { NodeProps } from "@xyflow/svelte";
+  import { Tooltip, TooltipTrigger, TooltipContent } from "@ui-sdk/svelte/tooltip";
   import type { JasonNode } from "~/stores/graph.svelte";
   import JsonViewer from "./json-viewer.svelte";
   import { editorStore } from "~/stores/editor.svelte";
   import { graphStore } from "~/stores/graph.svelte";
+  import { i18n } from "~/stores/i18n.svelte";
 
   let { data, id }: NodeProps<JasonNode> = $props();
 
   const isConnected = $derived(graphStore.connectedNodeIds.has(id));
   const isDirectHovered = $derived(graphStore.hoveredNodeId === id);
   const isDimmed = $derived(graphStore.hasFocus && !isConnected);
+  const isInvalidJson = $derived.by(() => {
+    if (!data.json.trim()) return false;
+    try {
+      JSON.parse(data.json);
+      return false;
+    } catch {
+      return true;
+    }
+  });
 
   $effect(() => {
     return () => {
@@ -21,8 +32,6 @@
       }
     };
   });
-
-  $inspect(data, id);
 </script>
 
 <div
@@ -30,7 +39,20 @@
   role="button"
   onmouseenter={() => graphStore.setHoveredNode(id)}
   onmouseleave={() => graphStore.setHoveredNode(null)}
-  class="node-card flex flex-col w-64 group outline-none transition-all duration-200"
+  ondblclick={(e) => {
+    const target = e.target as HTMLElement | null;
+    const interactive = target?.closest("button, [role='button'], .svelte-flow__handle");
+    if (interactive && interactive !== e.currentTarget) return;
+    e.stopPropagation();
+    editorStore.openEditor(id, data.label, data.json);
+  }}
+  onkeydown={(e) => {
+    if (e.target === e.currentTarget && e.key === "Enter") {
+      e.preventDefault();
+      editorStore.openEditor(id, data.label, data.json);
+    }
+  }}
+  class="node-card flex flex-col w-64 group outline-none"
   class:node-highlighted={isConnected}
   class:node-direct-hover={isDirectHovered}
   class:node-dimmed={isDimmed}
@@ -38,102 +60,113 @@
   <Handle type="target" position={Position.Left} class="handle-target" />
   <Handle type="source" position={Position.Right} class="handle-source" />
 
-  <div class="node-header px-4 py-1.5 flex items-center justify-between min-h-11">
-    <span class="node-title text-[13px] font-semibold tracking-[-0.01em] select-none">
-      {data.label}
-    </span>
+  <div
+    class="node-header px-3.5 py-2.5 flex items-center justify-between gap-2 border-b border-[var(--line)]"
+  >
+    <div class="flex items-center gap-1.5 min-w-0">
+      <span class="node-title text-[12.5px] font-medium tracking-[-0.01em] truncate select-none">
+        {data.label}
+      </span>
+      {#if isInvalidJson}
+        <span
+          class="w-1.5 h-1.5 rounded-full bg-[var(--danger)] flex-none"
+          title={i18n.t("invalidJson")}
+        ></span>
+      {/if}
+    </div>
     <div
-      class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto"
+      class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto"
     >
-      <button
-        onclick={() => editorStore.openEditor(id, data.label, data.json)}
-        class="action-btn edit-btn grid place-items-center cursor-pointer"
-        aria-label="Edit JSON"
-      >
-        <Code class="size-3.5" />
-      </button>
-      <button
-        onclick={() => graphStore.deleteNode(id)}
-        class="action-btn delete-btn grid place-items-center cursor-pointer"
-        aria-label="Delete Node"
-      >
-        <Trash class="size-3.5" />
-      </button>
+      <Tooltip>
+        <TooltipTrigger
+          onclick={() => editorStore.openEditor(id, data.label, data.json)}
+          class="action-btn edit-btn grid place-items-center cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-active)]"
+          aria-label={i18n.t("editNode")}
+        >
+          <Code class="size-3.5" />
+        </TooltipTrigger>
+        <TooltipContent side="top" sideOffset={6} class="ui-tooltip-content">
+          {i18n.t("editNode")}
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger
+          onclick={() => graphStore.deleteNode(id)}
+          class="action-btn delete-btn grid place-items-center cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-active)]"
+          aria-label="Delete Node"
+        >
+          <Trash class="size-3.5" />
+        </TooltipTrigger>
+        <TooltipContent side="top" sideOffset={6} class="ui-tooltip-content">
+          Delete
+        </TooltipContent>
+      </Tooltip>
     </div>
   </div>
 
-  <div class="node-body overflow-hidden">
+  <div class="node-body rounded-b-[9px] bg-[var(--surface-subtle)] overflow-hidden">
     <JsonViewer code={data.json} />
   </div>
 </div>
 
 <style>
   .node-card {
-    border-radius: var(--radius-md);
-    background-color: var(--color-surface);
-    border: 0.5px solid var(--color-border);
-    box-shadow:
-      0 1px 3px var(--color-shadow),
-      0 1px 2px rgba(0, 0, 0, 0.04);
+    border-radius: var(--radius-lg);
+    background-color: var(--surface);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-card);
     transition:
-      border-color 0.2s ease-out,
-      box-shadow 0.2s ease-out,
-      opacity 0.2s ease-out;
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      opacity 160ms ease;
   }
 
-  .node-card:hover,
+  .node-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-card-active);
+  }
+
   .node-card.node-highlighted {
-    border-color: var(--color-primary);
-    box-shadow:
-      0 6px 20px var(--color-primary-light),
-      0 1px 3px rgba(0, 0, 0, 0.05),
-      0 0 0 1px var(--color-primary);
+    border-color: var(--border-active);
+    box-shadow: var(--shadow-card-active);
   }
 
   .node-card.node-dimmed {
-    opacity: 0.3;
-  }
-
-  .node-header {
-    border-top-left-radius: var(--radius-md);
-    border-top-right-radius: var(--radius-md);
-    border-bottom: 0.5px solid var(--color-border);
+    opacity: 0.36;
   }
 
   .node-title {
-    color: var(--color-text-primary);
+    color: var(--ink);
   }
 
-  .node-body {
-    border-bottom-left-radius: var(--radius-md);
-    border-bottom-right-radius: var(--radius-md);
-  }
-
-  .action-btn {
-    width: 28px;
-    height: 28px;
+  .node-card :global(.action-btn) {
+    width: 26px;
+    height: 26px;
     position: relative;
-    border-radius: var(--radius-sm);
-    color: var(--color-text-tertiary);
-    transition: all 0.12s ease;
+    border-radius: 6px;
+    color: var(--ink-tertiary);
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
     border: none;
     background: transparent;
   }
 
   /* Expand touch target to 44px+ boundary without visual changes */
-  .action-btn::after {
+  .node-card :global(.action-btn::after) {
     content: "";
     position: absolute;
-    inset: -8px;
+    inset: -9px;
   }
 
-  .edit-btn:hover {
-    color: var(--color-primary);
-    background-color: var(--color-primary-light);
+  .node-card :global(.edit-btn:hover) {
+    color: var(--ink);
+    background-color: var(--hover);
   }
 
-  .delete-btn:hover {
-    color: var(--color-danger);
-    background-color: var(--color-danger-bg);
+  .node-card :global(.delete-btn:hover) {
+    color: var(--danger);
+    background-color: var(--danger-bg);
   }
 </style>

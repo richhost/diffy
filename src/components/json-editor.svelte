@@ -1,37 +1,43 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { EditorView, basicSetup } from "codemirror";
-  import { EditorState, Compartment, EditorSelection } from "@codemirror/state";
+  import { EditorState, Compartment, EditorSelection, Prec } from "@codemirror/state";
+  import { keymap, placeholder } from "@codemirror/view";
+  import { indentWithTab } from "@codemirror/commands";
   import { json } from "@codemirror/lang-json";
-  import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+  import { HighlightStyle, syntaxHighlighting, syntaxTree } from "@codemirror/language";
+  import { linter, type Diagnostic } from "@codemirror/lint";
   import { tags as t } from "@lezer/highlight";
   import { themeStore } from "~/stores/theme.svelte";
+  import { parseLooseJSON } from "~/utils/json";
 
-  const pierreLightHighlightStyle = HighlightStyle.define([
-    { tag: t.propertyName, color: "#d73a49" },
-    { tag: t.string, color: "#22863a" },
-    { tag: t.number, color: "#005cc5" },
-    { tag: t.bool, color: "#005cc5" },
-    { tag: t.null, color: "#005cc5" },
-    { tag: t.separator, color: "#1d1d1f" },
-    { tag: t.brace, color: "#1d1d1f" },
-    { tag: t.bracket, color: "#1d1d1f" },
+  const geistLightHighlightStyle = HighlightStyle.define([
+    { tag: t.propertyName, color: "#d5512f" },
+    { tag: t.string, color: "#199f43" },
+    { tag: t.number, color: "#1ca1c7" },
+    { tag: t.bool, color: "#1ca1c7" },
+    { tag: t.null, color: "#1ca1c7" },
+    { tag: t.separator, color: "#71717a" },
+    { tag: t.brace, color: "#71717a" },
+    { tag: t.bracket, color: "#71717a" },
+    { tag: t.punctuation, color: "#71717a" },
   ]);
 
-  const ayuDarkHighlightStyle = HighlightStyle.define([
-    { tag: t.propertyName, color: "#59c2ff" },
-    { tag: t.string, color: "#aad94c" },
-    { tag: t.number, color: "#d2a6ff" },
-    { tag: t.bool, color: "#ff8f40" },
-    { tag: t.null, color: "#ff8f40" },
-    { tag: t.separator, color: "#8c8b88" },
-    { tag: t.brace, color: "#8c8b88" },
-    { tag: t.bracket, color: "#8c8b88" },
-    { tag: t.punctuation, color: "#8c8b88" },
+  const geistDarkHighlightStyle = HighlightStyle.define([
+    { tag: t.propertyName, color: "#ff855e" },
+    { tag: t.string, color: "#5ecc71" },
+    { tag: t.number, color: "#68cdf2" },
+    { tag: t.bool, color: "#68cdf2" },
+    { tag: t.null, color: "#68cdf2" },
+    { tag: t.separator, color: "#71717a" },
+    { tag: t.brace, color: "#71717a" },
+    { tag: t.bracket, color: "#71717a" },
+    { tag: t.punctuation, color: "#71717a" },
   ]);
 
   import {
     search,
+    openSearchPanel,
     getSearchQuery,
     setSearchQuery,
     findNext,
@@ -194,6 +200,24 @@
     replaceInput.oninput = () => commit(false);
 
     dom.onkeydown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+        const key = e.key.toLowerCase();
+        if (key === "f") {
+          e.preventDefault();
+          e.stopPropagation();
+          searchInput.focus();
+          searchInput.select();
+          return;
+        }
+        if (key === "g") {
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.shiftKey) findPrevious(view);
+          else findNext(view);
+          return;
+        }
+      }
+
       if (e.key === "Enter") {
         e.preventDefault();
         if (e.target === searchInput) {
@@ -240,7 +264,7 @@
   function getThemeExtensions(isDark: boolean) {
     if (isDark) {
       return [
-        syntaxHighlighting(ayuDarkHighlightStyle),
+        syntaxHighlighting(geistDarkHighlightStyle),
         EditorView.theme({
           "&": {
             flex: "1",
@@ -250,20 +274,22 @@
             background: "transparent !important",
             fontSize: "13px !important",
             fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
-            color: "#bfbdb6 !important",
+            color: "var(--ink) !important",
           },
           ".cm-content": {
             fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
+            padding: "10px 0 !important",
           },
           ".cm-line": {
             fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
           },
           ".cm-scroller": { overflow: "auto", flex: "1", minHeight: "0" },
           ".cm-gutters": {
-            background: "var(--color-neutral-bg) !important",
-            borderRight: "1px solid var(--color-border) !important",
-            color: "var(--color-text-quaternary) !important",
+            background: "transparent !important",
+            borderRight: "none !important",
+            color: "var(--ink-quaternary) !important",
             fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
+            paddingLeft: "8px",
             paddingRight: "8px",
             position: "sticky !important",
             left: "0 !important",
@@ -276,23 +302,23 @@
           ".cm-panels-bottom": {
             position: "static !important",
             bottom: "auto !important",
-            borderTop: "1px solid var(--color-border) !important",
+            borderTop: "1px solid var(--line) !important",
           },
           ".cm-activeLineGutter": { background: "transparent !important" },
           ".cm-activeLine": { background: "rgba(255, 255, 255, 0.035) !important" },
-          ".cm-cursor": { borderLeftColor: "var(--color-primary) !important" },
+          ".cm-cursor": { borderLeftColor: "var(--ink) !important" },
           ".cm-selectionBackground": {
-            background: "var(--color-primary-light) !important",
+            background: "var(--hover) !important",
           },
           "&.cm-focused .cm-selectionBackground": {
-            background: "var(--color-primary-light) !important",
+            background: "var(--active) !important",
           },
         }),
       ];
     }
 
     return [
-      syntaxHighlighting(pierreLightHighlightStyle),
+      syntaxHighlighting(geistLightHighlightStyle),
       EditorView.theme({
         "&": {
           flex: "1",
@@ -302,19 +328,22 @@
           background: "transparent !important",
           fontSize: "13px !important",
           fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
+          color: "var(--ink) !important",
         },
         ".cm-content": {
           fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
+          padding: "10px 0 !important",
         },
         ".cm-line": {
           fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
         },
         ".cm-scroller": { overflow: "auto", flex: "1", minHeight: "0" },
         ".cm-gutters": {
-          background: "var(--color-neutral-bg) !important",
-          borderRight: "1px solid var(--color-border) !important",
-          color: "var(--color-text-quaternary) !important",
+          background: "transparent !important",
+          borderRight: "none !important",
+          color: "var(--ink-quaternary) !important",
           fontFamily: '"Google Sans Code Variable", var(--font-mono), monospace !important',
+          paddingLeft: "8px",
           paddingRight: "8px",
           position: "sticky !important",
           left: "0 !important",
@@ -327,41 +356,171 @@
         ".cm-panels-bottom": {
           position: "static !important",
           bottom: "auto !important",
-          borderTop: "1px solid var(--color-border) !important",
+          borderTop: "1px solid var(--line) !important",
         },
         ".cm-activeLineGutter": { background: "transparent !important" },
-        ".cm-activeLine": { background: "rgba(0,0,0,0.025) !important" },
-        ".cm-cursor": { borderLeftColor: "var(--color-primary) !important" },
+        ".cm-activeLine": { background: "rgba(9, 9, 11, 0.028) !important" },
+        ".cm-cursor": { borderLeftColor: "var(--ink) !important" },
         ".cm-selectionBackground": {
-          background: "var(--color-primary-light) !important",
+          background: "var(--hover) !important",
+        },
+        "&.cm-focused .cm-selectionBackground": {
+          background: "var(--active) !important",
         },
       }),
     ];
   }
 
-  type Props = { value?: string; onChange?: (value: string) => void };
+  type Props = {
+    value?: string;
+    wordWrap?: boolean;
+    placeholderText?: string;
+    onChange?: (value: string) => void;
+    onSave?: () => void;
+    onFormat?: () => void;
+  };
 
-  let { value = $bindable(), onChange }: Props = $props();
+  let {
+    value = $bindable(),
+    wordWrap = true,
+    placeholderText = "",
+    onChange,
+    onSave,
+    onFormat,
+  }: Props = $props();
 
   let container: HTMLDivElement;
   let view = $state.raw<EditorView | undefined>(undefined);
 
+  const wrapCompartment = new Compartment();
+  const placeholderCompartment = new Compartment();
+
+  function findFirstSyntaxError(state: EditorState): number | null {
+    const cursor = syntaxTree(state).cursor();
+    do {
+      if (cursor.type.isError) {
+        return cursor.from;
+      }
+    } while (cursor.next());
+    return null;
+  }
+
+  const jsonLinter = linter(
+    (editorView): Diagnostic[] => {
+      const raw = editorView.state.doc.toString();
+      if (!raw.trim()) return [];
+
+      try {
+        JSON.parse(raw);
+        return [];
+      } catch (e) {
+        if (!(e instanceof SyntaxError)) return [];
+
+        let pos: number | null = null;
+        const posMatch = e.message.match(/at position (\d+)/);
+        const lineColMatch = e.message.match(/at line (\d+) column (\d+)/);
+
+        if (posMatch) {
+          pos = Number(posMatch[1]);
+        } else if (lineColMatch) {
+          const lineNum = Math.max(1, Math.min(Number(lineColMatch[1]), editorView.state.doc.lines));
+          pos = editorView.state.doc.line(lineNum).from + Number(lineColMatch[2]) - 1;
+        } else {
+          pos = findFirstSyntaxError(editorView.state);
+        }
+
+        const from = Math.max(0, Math.min(pos ?? 0, editorView.state.doc.length));
+        const to = Math.min(from + 1, editorView.state.doc.length);
+        return [
+          {
+            from,
+            to,
+            severity: "error",
+            message: e.message,
+          },
+        ];
+      }
+    },
+    { delay: 220 },
+  );
+
+  export function focus() {
+    view?.focus();
+  }
+
+  export function openSearch() {
+    if (!view) return;
+    openSearchPanel(view);
+    const input = view.dom.querySelector<HTMLInputElement>(".cm-search-field");
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }
+
+  export function jumpToPosition(pos?: number | null) {
+    if (!view) return;
+    const target = typeof pos === "number" ? pos : findFirstSyntaxError(view.state);
+    const clamped = Math.max(0, Math.min(target ?? 0, view.state.doc.length));
+    view.dispatch({
+      selection: EditorSelection.single(clamped),
+      effects: EditorView.scrollIntoView(clamped, { y: "center" }),
+    });
+    view.focus();
+  }
+
   $effect(() => {
     if (!container) return;
 
-    view = new EditorView({
+    const initialView = new EditorView({
       parent: container,
-      doc: untrack(() => value),
+      doc: untrack(() => value ?? ""),
       extensions: [
+        Prec.high(
+          keymap.of([
+            {
+              key: "Mod-s",
+              run: () => {
+                onSave?.();
+                return true;
+              },
+            },
+            {
+              key: "Mod-Enter",
+              run: () => {
+                onSave?.();
+                return true;
+              },
+            },
+            {
+              key: "Shift-Alt-f",
+              run: () => {
+                onFormat?.();
+                return true;
+              },
+            },
+            {
+              key: "Mod-Shift-f",
+              run: () => {
+                onFormat?.();
+                return true;
+              },
+            },
+          ]),
+        ),
+        keymap.of([indentWithTab]),
         basicSetup,
         search({
-          createPanel: (view) => createCustomSearchPanel(view),
+          createPanel: (v) => createCustomSearchPanel(v),
           top: false,
           scrollToMatch: (range) => EditorView.scrollIntoView(range, { y: "center" }),
         }),
         EditorView.cursorScrollMargin.of({ x: 0, y: 40 }),
         json(),
+        jsonLinter,
         themeCompartment.of(getThemeExtensions(untrack(() => themeStore.isDark))),
+        wrapCompartment.of(untrack(() => (wordWrap ? EditorView.lineWrapping : []))),
+        placeholderCompartment.of(untrack(() => (placeholderText ? placeholder(placeholderText) : []))),
         EditorState.tabSize.of(2),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
@@ -373,7 +532,7 @@
           }
         }),
         EditorView.domEventHandlers({
-          paste(event, view) {
+          paste(event, editorView) {
             const clipboardData = event.clipboardData;
             if (!clipboardData) return false;
 
@@ -381,34 +540,21 @@
             if (!pastedText) return false;
 
             try {
-              const trimmed = pastedText.trim();
-              let parsed: any = null;
-
-              if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-                const unescaped = JSON.parse(trimmed);
-                if (typeof unescaped === "string") {
-                  parsed = JSON.parse(unescaped);
-                } else {
-                  parsed = unescaped;
-                }
-              } else {
-                try {
-                  parsed = JSON.parse(trimmed);
-                } catch (innerErr) {
-                  const replaced = trimmed.replace(/\\"/g, '"');
-                  parsed = JSON.parse(replaced);
-                }
-              }
-
-              if (typeof parsed === "string") {
-                parsed = JSON.parse(parsed);
-              }
-
+              const parsed = parseLooseJSON(pastedText);
               if (typeof parsed === "object" && parsed !== null) {
-                const formatted = JSON.stringify(parsed, null, 2);
+                let formatted = JSON.stringify(parsed, null, 2);
+                const { from, to } = editorView.state.selection.main;
+                const line = editorView.state.doc.lineAt(from);
 
-                const { from, to } = view.state.selection.main;
-                view.dispatch({
+                if (from > line.from) {
+                  const baseIndent = line.text.match(/^\s*/)?.[0] ?? "";
+                  if (baseIndent) {
+                    const lines = formatted.split("\n");
+                    formatted = [lines[0], ...lines.slice(1).map((l) => baseIndent + l)].join("\n");
+                  }
+                }
+
+                editorView.dispatch({
                   changes: { from, to, insert: formatted },
                   selection: { anchor: from + formatted.length },
                   scrollIntoView: true,
@@ -416,7 +562,7 @@
 
                 return true;
               }
-            } catch (e) {}
+            } catch {}
 
             return false;
           },
@@ -424,8 +570,10 @@
       ],
     });
 
+    view = initialView;
+
     return () => {
-      view?.destroy();
+      initialView.destroy();
       view = undefined;
     };
   });
@@ -440,7 +588,25 @@
   });
 
   $effect(() => {
-    if (view && value !== view.state.doc.toString()) {
+    const wrap = wordWrap;
+    if (view) {
+      view.dispatch({
+        effects: wrapCompartment.reconfigure(wrap ? EditorView.lineWrapping : []),
+      });
+    }
+  });
+
+  $effect(() => {
+    const text = placeholderText;
+    if (view) {
+      view.dispatch({
+        effects: placeholderCompartment.reconfigure(text ? placeholder(text) : []),
+      });
+    }
+  });
+
+  $effect(() => {
+    if (view && value !== undefined && value !== view.state.doc.toString()) {
       view.dispatch({
         changes: { from: 0, to: view.state.doc.length, insert: value },
       });
@@ -463,12 +629,12 @@
     flex-shrink: 0 !important;
     z-index: 10 !important;
     width: 100% !important;
-    background: var(--color-surface, #ffffff) !important;
+    background: var(--surface) !important;
   }
   :global(.cm-panels-bottom) {
     position: static !important;
     bottom: auto !important;
-    border-top: 1px solid var(--color-border, rgba(0, 0, 0, 0.08)) !important;
+    border-top: 1px solid var(--border-color) !important;
   }
   :global(.cm-scroller) {
     overflow: auto !important;
