@@ -16,7 +16,6 @@
     FileDiff,
     parseDiffFromFile,
     getSharedHighlighter,
-    wrapCoreCSS,
   } from "@pierre/diffs";
   import X from "@tabler/icons-svelte-runes/icons/x";
   import Maximize from "@tabler/icons-svelte-runes/icons/maximize";
@@ -32,22 +31,6 @@
   let isMaximized = $state(false);
   let diffChunks = $state<HTMLElement[]>([]);
   let currentChunkIndex = $state(0);
-
-  // Register diffs-container custom element
-  if (typeof window !== "undefined" && !customElements.get("diffs-container")) {
-    const coreStyles = wrapCoreCSS("");
-    class FileDiffContainer extends HTMLElement {
-      constructor() {
-        super();
-        if (this.shadowRoot != null) return;
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        const style = document.createElement("style");
-        style.textContent = coreStyles;
-        shadowRoot.appendChild(style);
-      }
-    }
-    customElements.define("diffs-container", FileDiffContainer);
-  }
 
   let diffContainer = $state<HTMLDivElement | null>(null);
   let diffStyle = $state<"split" | "unified">("split");
